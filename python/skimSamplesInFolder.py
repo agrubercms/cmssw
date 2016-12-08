@@ -39,10 +39,12 @@ def main():
             postfix = "QCD"
 
         exe = "python " + options.config + " " + path + "/" + sample + " " + path + "/"  + sample_name_new + " " + postfix
-        #print exe
+        print exe
         p = subprocess.Popen( exe, \
         stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE, stdin = subprocess.PIPE )
         ( out, err ) = p.communicate()
+        print out
+        print err
 
 
 if __name__ == '__main__':
