@@ -41,7 +41,7 @@ def copyFiles( filelist, identifier, identifier_folder, options ):
     os.mkdir( outDir )
     #shutil.copyfile( inputFile, os.path.join( outDir, inputFileName ) )
 
-    exe = "curl --cert-type PEM --cert ~/.globus/usercert.pem --key ~/.globus/userkey.pem --key-type PEM -k " + \
+    exe = "curl --anyauth --cert-type PEM --cert ~/.globus/usercert.pem --key ~/.globus/userkey.pem --key-type PEM -k " + \
           "https://cmsweb.cern.ch/dqm/relval/data/browse/ROOT/RelVal/" + identifier_folder
 
     for filename in filelist:
@@ -76,11 +76,15 @@ def main():
     identifier_folder = "CMSSW_" + num0 + "_" + num1 + "_x/"
     print identifier_folder
 
-    exe = "curl --cert-type PEM --cert ~/.globus/usercert.pem --key ~/.globus/userkey.pem --key-type PEM -k " + \
+    exe = "curl --anyauth --cert-type PEM --cert ~/.globus/usercert.pem --key ~/.globus/userkey.pem --key-type PEM -k " + \
           "https://cmsweb.cern.ch/dqm/relval/data/browse/ROOT/RelVal/" + identifier_folder
+
+    print exe
 
     p = subprocess.Popen( exe, stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE, stdin = subprocess.PIPE )
     ( curl_out, curl_err ) = p.communicate()
+
+    print curl_err
 
     filename_list = []
 
