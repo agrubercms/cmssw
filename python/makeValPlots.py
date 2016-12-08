@@ -9,25 +9,32 @@ import subprocess
 def readInput():
     parser = optparse.OptionParser( description='Plot all standard validation distributions', \
                                     usage='usage: %prog [options] folder ' )
+    parser.add_option( '-o', '--oldDM', action="store_true", dest="oldDM", default=False, help='Use old DecayModes instead of new ones. [default: %default]' )
     ( options, args ) = parser.parse_args()
 
-    return args
+    return args, options
 
 
 
 def main():
-    paths = readInput()
+    paths, options = readInput()
 
     exe = "python /.automount/home/home__home1/institut_3a/knutzen/TauReleaseValidation/tau_validation_tools/CMSSW/CMSSW_8_1_0_pre4/src/Validation/RecoTau/Tools/MultipleCompare.py"
 
 
     #exe + '-T ' + testsample  + "-R " + referencesample + "-t" +testtag+ " -r " + referencetag + distribution + " --logScaleY --maxLogY=100000 --maxYR=2.0 --rebin=10 --maxXaxis=80 -o " + outputfile
-
-    discriminator_list = [ [ "DecayModeFindingNewDMsEff", "/MVA6*ElectronRejectionEff", "_AntiEle" ], \
-                           [ "DecayModeFindingNewDMsEff","*CombinedIsolationDBSumPtCorr3HitsEff", "_Comb_Iso" ], \
-                           [ "DecayModeFindingNewDMsEff", "*IsolationMVArun2v1DBnewDMwLTEff", "_MVA_Iso" ], \
-                           [ "DecayModeFindingNewDMsEff", "/*MuonRejection3Eff", "_AntiMu" ], \
-    ]
+    if options.oldDM:
+        discriminator_list = [ [ "DecayModeFindingOldDMsEff", "/MVA6*ElectronRejectionEff", "_AntiEle" ], \
+                               [ "DecayModeFindingOldDMsEff","*CombinedIsolationDBSumPtCorr3HitsEff", "_Comb_Iso" ], \
+                               [ "DecayModeFindingOldDMsEff", "*IsolationMVArun2v1DBoldDMwLTEff", "_MVA_Iso" ], \
+                               [ "DecayModeFindingOldDMsEff", "/*MuonRejection3Eff", "_AntiMu" ], \
+        ]
+    else:
+        discriminator_list = [ [ "DecayModeFindingNewDMsEff", "/MVA6*ElectronRejectionEff", "_AntiEle" ], \
+                               [ "DecayModeFindingNewDMsEff","*CombinedIsolationDBSumPtCorr3HitsEff", "_Comb_Iso" ], \
+                               [ "DecayModeFindingNewDMsEff", "*IsolationMVArun2v1DBnewDMwLTEff", "_MVA_Iso" ], \
+                               [ "DecayModeFindingNewDMsEff", "/*MuonRejection3Eff", "_AntiMu" ], \
+        ]
 
     type_list = [ "eff", "fake" ]
 
