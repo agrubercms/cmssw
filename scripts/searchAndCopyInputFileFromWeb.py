@@ -4,7 +4,9 @@ import os
 import sys
 import optparse
 import shutil
-import subprocess
+
+import Validation.tau_validation_tools.tools as tools
+
 
 def readInput():
     parser = optparse.OptionParser( description='Get the names of the input files from web.', \
@@ -26,7 +28,7 @@ def readInput():
 
     return options, args[ 0 ]
 
-def copyFiles( filelist, identifier, identifier_folder, options ):
+def copyFiles(exe, filelist, identifier, identifier_folder, options):
     outDir_parent = str( options.output_dir )
     outDir = outDir_parent + "_" + identifier + "_" + str( options.tag )
     if os.path.isdir( outDir ):
@@ -38,20 +40,17 @@ def copyFiles( filelist, identifier, identifier_folder, options ):
            sys.exit( 0 )
 
     shutil.rmtree( outDir, ignore_errors = True )
-    os.mkdir( outDir )
-    #shutil.copyfile( inputFile, os.path.join( outDir, inputFileName ) )
-
-    exe = "curl --anyauth --cert-type PEM --cert ~/.globus/usercert.pem --key ~/.globus/userkey.pem --key-type PEM -k " + \
-          "https://cmsweb.cern.ch/dqm/relval/data/browse/ROOT/RelVal/" + identifier_folder
+    os.makedirs(outDir)
 
     for filename in filelist:
         exe_temp = exe + filename + " -o " + outDir + "/" + filename
         print exe_temp
-        p = subprocess.Popen( exe_temp, \
-        stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE, stdin = subprocess.PIPE )
-        ( curl_out, curl_err ) = p.communicate()
+        tools.call_command(exe_temp)
 
 def main():
+    converted_key = "userkey.pem"
+    tools.convert_certificate_key_rsa("~/.globus/userkey.pem", converted_key)
+
     options, identifier = readInput()
 
     if not "CMSSW" in identifier:
@@ -76,13 +75,12 @@ def main():
     identifier_folder = "CMSSW_" + num0 + "_" + num1 + "_x/"
     print identifier_folder
 
-    exe = "curl --anyauth --cert-type PEM --cert ~/.globus/usercert.pem --key ~/.globus/userkey.pem --key-type PEM -k " + \
-          "https://cmsweb.cern.ch/dqm/relval/data/browse/ROOT/RelVal/" + identifier_folder
+    exe = ("curl --anyauth --cert-type PEM --cert ~/.globus/usercert.pem --key {user_key} --key-type PEM -k " +
+           "https://cmsweb.cern.ch/dqm/relval/data/browse/ROOT/RelVal/{identifier_folder}").format(user_key=converted_key, identifier_folder=identifier_folder)
 
     print exe
 
-    p = subprocess.Popen( exe, stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE, stdin = subprocess.PIPE )
-    ( curl_out, curl_err ) = p.communicate()
+    ( curl_out, curl_err ) = tools.call_command(exe)
 
     print curl_err
 
@@ -106,9 +104,10 @@ def main():
     else:
        sys.exit( 0 )
 
-    copyFiles( filename_list, identifier, identifier_folder, options )
-
-
+    copyFiles(exe, filename_list, identifier, identifier_folder, options)
+    
+    if os.path.exists(converted_key):
+        os.remove(converted_key)
 
 if __name__ == '__main__':
     main()
