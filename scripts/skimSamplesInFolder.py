@@ -11,6 +11,7 @@ def readInput():
 	                               usage="usage: %prog [options] folder ")
 	parser.add_option("-c", "--config", action="store", metavar="config", dest="config",
 	                  default="$CMSSW_BASE/src/Validation/RecoTau/Tools/GetRecoTauVFromDQM_MC_cff.py",
+	                  #default="$CMSSW_BASE/src/Validation/RecoTau/Tools/GetRecoTauVFromDQM_MC_cff_2.py",
 	                  help="Additional filter on the filenames. [default: %default]")
 	parser.add_option("-o", "--output_dir", action="store", metavar="output_dir", dest="output_dir",
 	                  default="/disk1/knutzen/TauPOG/RelVal/samples/",
