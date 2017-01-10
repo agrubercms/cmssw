@@ -33,19 +33,19 @@ def copyFiles(exe, filelist, identifier, identifier_folder, options):
     outDir = outDir_parent + "_" + identifier + "_" + str( options.tag )
     if os.path.isdir( outDir ):
         print ""
-        input_str_outDir = raw_input( outDir + " already exists. It will be deleted. Do you want to continue? ([n] y): " )
+        input_str_outDir = raw_input( outDir + " already exists. Do you want to delete it? ([n] y): " )
         if input_str_outDir == "y":
-           pass
-        else:
-           sys.exit( 0 )
-
-    shutil.rmtree( outDir, ignore_errors = True )
-    os.makedirs(outDir)
+            shutil.rmtree( outDir, ignore_errors = True )
+    
+    if not os.path.exists(outDir):
+        os.makedirs(outDir)
 
     for filename in filelist:
-        exe_temp = exe + filename + " -o " + outDir + "/" + filename
-        print exe_temp
-        tools.call_command(exe_temp)
+        outputFile = os.path.join(outDir, filename)
+        if not os.path.exists(outputFile):
+            exe_temp = "exe{filename} -o {outputFile}".format(exe=exe, filename=filename, outputFile=outputFile)
+            print exe_temp
+            tools.call_command(exe_temp)
 
 def main():
     converted_key = "userkey.pem"
@@ -98,11 +98,9 @@ def main():
         print filename
         filename_list.append( filename )
 
-    input_files_decision = raw_input( "Do you want to copy the above stated files to your local machine? ([n] y): " )
-    if input_files_decision == "y":
-       pass
-    else:
-       sys.exit( 0 )
+    input_files_decision = raw_input( "Do you want to copy the above stated files to your local machine? (n [y]): " )
+    if input_files_decision == "n":
+       sys.exit(0)
 
     copyFiles(exe, filename_list, identifier, identifier_folder, options)
     
