@@ -7,9 +7,9 @@ import shutil
 import subprocess
 
 def readInput():
-	parser = optparse.OptionParser(description='Plot all standard validation distributions',
-	                               usage='usage: %prog [options] folder ')
-	parser.add_option('-o', '--oldDM', action="store_true", dest="oldDM", default=False, help='Use old DecayModes instead of new ones. [default: %default]')
+	parser = optparse.OptionParser(description="Plot all standard validation distributions",
+	                               usage="usage: %prog [options] folder ")
+	parser.add_option("-o", "--oldDM", action="store_true", dest="oldDM", default=False, help="Use old DecayModes instead of new ones. [default: %default]")
 	(options, args) = parser.parse_args()
 
 	return args, options
@@ -124,5 +124,5 @@ def main():
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	main()

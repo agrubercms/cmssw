@@ -9,16 +9,16 @@ import Validation.tau_validation_tools.tools as tools
 
 
 def readInput():
-	parser = optparse.OptionParser(description='Get the names of the input files from web.',
-	                               usage='usage: %prog [options] identifier (e.g. CMSSW_8_1_0_pre5) ')
-	parser.add_option('-f', '--filter', action='store', metavar='filter', default="", dest="filter",
-	                  help='Additional filter on the filenames. [default: %default]')
-	parser.add_option('-t', '--tag', action='store', metavar='tag', default="", dest="tag",
-	                  help='Additional name-tag for the folder. [default: %default]')
-	parser.add_option('-v', '--veto', action='store', metavar='veto', default="", dest="veto",
-	                  help='Additional veto on the filenames. [default: %default]')
-	parser.add_option('-o', '--output_dir', action='store', metavar='output_dir', default="/nfs/dust/cms/user/tmuller/taupog/relval/samples/", dest="output_dir",
-	                  help='Output directory. [default: %default]')
+	parser = optparse.OptionParser(description="Get the names of the input files from web.",
+	                               usage="usage: %prog [options] identifier (e.g. CMSSW_8_1_0_pre5) ")
+	parser.add_option("-f", "--filter", action="store", metavar="filter", default="", dest="filter",
+	                  help="Additional filter on the filenames. [default: %default]")
+	parser.add_option("-t", "--tag", action="store", metavar="tag", default="", dest="tag",
+	                  help="Additional name-tag for the folder. [default: %default]")
+	parser.add_option("-v", "--veto", action="store", metavar="veto", default="", dest="veto",
+	                  help="Additional veto on the filenames. [default: %default]")
+	parser.add_option("-o", "--output_dir", action="store", metavar="output_dir", default="/nfs/dust/cms/user/tmuller/taupog/relval/samples/", dest="output_dir",
+	                  help="Output directory. [default: %default]")
 
 	(options, args) = parser.parse_args()
 
@@ -90,7 +90,6 @@ def main():
 
 	output_list = curl_out.split("<tr><td><a href='")
 	for line in output_list:
-		#if ".root'>" not in line or identifier not in line
 		if ".root'>" not in line or identifier not in line or str(options.filter) not in line or (str(options.veto) in line and str(options.veto))
 			or not ("ZEE" in line or "ZMM" in line or "ZTT" in line or "QCD" in line or "TTbar" in line or "Zprime" in line):
 			continue
@@ -107,5 +106,5 @@ def main():
 	if os.path.exists(converted_key):
 		os.remove(converted_key)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	main()

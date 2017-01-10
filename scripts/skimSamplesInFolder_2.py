@@ -7,14 +7,14 @@ import shutil
 import subprocess
 
 def readInput():
-	parser = optparse.OptionParser(description='Perform the skimming for all samples in a folder',
-	                               usage='usage: %prog [options] folder ')
-	parser.add_option('-c', '--config', action='store', metavar='config', dest="config",
+	parser = optparse.OptionParser(description="Perform the skimming for all samples in a folder",
+	                               usage="usage: %prog [options] folder ")
+	parser.add_option("-c", "--config", action="store", metavar="config", dest="config",
 	                  default="$CMSSW_BASE/src/Validation/RecoTau/Tools/GetRecoTauVFromDQM_MC_cff_2.py",
-	                  help='Additional filter on the filenames. [default: %default]') dest="output_dir",
-	parser.add_option('-o', '--output_dir', action='store', metavar='output_dir',
+	                  help="Additional filter on the filenames. [default: %default]") dest="output_dir",
+	parser.add_option("-o", "--output_dir", action="store", metavar="output_dir",
 	                  default="/disk1/knutzen/TauPOG/RelVal/samples/",
-	                  help='Output directory. [default: %default]')
+	                  help="Output directory. [default: %default]")
 
 	(options, args) = parser.parse_args()
 
@@ -49,5 +49,5 @@ def main():
 		print err
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	main()
