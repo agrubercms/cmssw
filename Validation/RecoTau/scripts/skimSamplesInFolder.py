@@ -34,15 +34,17 @@ def main():
 
 	for input_file in input_list:
 		output_file = os.path.join(args.output_dir, campaign, os.path.basename(input_file))
+		if not os.path.exists(os.path.dirname(output_file)):
+			os.makedirs(os.path.dirname(output_file))
 
 		postfix = ""
-		if "ZTT" in output_file or "Zprime" in output_file:
+		if "ZTT" in input_file or "Zprime" in input_file:
 			postfix = "ZTT"
-		if "ZMM" in output_file:
+		if "ZMM" in input_file:
 			postfix = "ZMM"
-		if "ZEE" in output_file:
+		if "ZEE" in input_file:
 			postfix = "ZEE"
-		if "TTbar" in output_file or "QCD" in output_file:
+		if "TTbar" in input_file or "QCD" in input_file:
 			postfix = "QCD"
 
 		exe = "python " + args.config + " " + input_file + " " + output_file + " " + postfix
