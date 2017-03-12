@@ -6,21 +6,28 @@ import sys
 import shutil
 import subprocess
 
+import Validation.RecoTau.tools as tools
+
+
 def readInput():
 	parser = argparse.ArgumentParser(description="Plot all standard validation distributions")
 	parser.add_argument("paths", nargs=2,
 	                    help="Two paths to compare.")
-	parser.add_argument("-o", "--old-dm", action="store_true", default=False,
+	parser.add_argument("--old-dm", action="store_true", default=False,
 	                    help="Use old DecayModes instead of new ones. [default: %(default)s]")
+	parser.add_argument("-o", "--output-dir", default="$CMSSW_BASE/src/Validation/RecoTau/data/relval_plots",
+	                    help="Output directory. [default: %(default)s]")
 	
 	args = parser.parse_args()
+	args.output_dir = os.path.expandvars(args.output_dir)
+	
 	return args
 
 
 def main():
 	args = readInput()
 
-	exe = "python "+os.path.expandvars("$CMSSW_BASE4/src/Validation/RecoTau/Tools/MultipleCompare.py")
+	exe = "python "+os.path.expandvars("$CMSSW_BASE/src/Validation/RecoTau/Tools/MultipleCompare.py")
 
 	#exe + '-T ' + testsample  + "-R " + referencesample + "-t" +testtag+ " -r " + referencetag + distribution + " --logScaleY --maxLogY=100000 --maxYR=2.0 --rebin=10 --maxXaxis=80 -o " + outputfile
 	if args.old_dm:
@@ -52,26 +59,26 @@ def main():
 			temp_list.append(discriminator_tuple[-1])
 			distribution_list.append(temp_list)
 
-	input_list_t = os.listdir(args.paths[0])
-	input_list_r = os.listdir(args.paths[1])
-
-	release_t = args.paths[0].split("_CMSSW_")[-1]
-	release_r = args.paths[1].split("_CMSSW_")[-1]
-
+	input_list_t = os.listdir(os.path.dirname(args.paths[0]))
+	input_list_r = os.listdir(os.path.dirname(args.paths[1]))
 	#print input_list_t
 	#print input_list_r
 
+	release_t = args.paths[0][args.paths[0].rfind("_CMSSW_")+1:].replace(".root", "")
+	release_r = args.paths[1][args.paths[1].rfind("_CMSSW_")+1:].replace(".root", "")
+	#print release_t
+	#print release_r
+	
+	output_dir = os.path.join(args.output_dir, release_t+"_vs_"+release_r)
+	if not os.path.exists(output_dir):
+		os.makedirs(output_dir)
+
 	input_output_tuple_list = []
 	for sample in input_list_t:
-		if "DQM_V" in sample:
-			continue
-
 		output_name = sample.split(".ro")[0]
 		identifier = sample.split("_13_")[0]
 		sampleMatch = ""
 		for sample2 in input_list_r:
-			if "DQM_V" in sample2:
-				continue
 			if identifier in sample2:
 				sampleMatch = sample2
 		input_output_tuple_list.append([output_name, sample, sampleMatch])
@@ -103,22 +110,25 @@ def main():
 					distribution_str +=  " '" + distribution + "' "
 				kin_str = ""
 				if "eta" in distribution_str:
-					kin_str = "_eta_"
+					kin_str = "_eta"
 				elif "phi" in distribution_str:
-					kin_str = "_phi_"
+					kin_str = "_phi"
 					maxXaxis = " --maxXaxis=200 --minXaxis=-200 "
 				elif "pileup" in distribution_str:
-					kin_str = "_pileup_"
+					kin_str = "_pileup"
 					maxXaxis = " --maxXaxis=80  "
 				else:
-					kin_str = "_pt_"
+					kin_str = "_pt"
 					maxXaxis = " --maxXaxis=200  "
 
 
-				print exe + " -T '" + str(args.paths[0]) + "/" +  str(tuple[1])   + "' -R '" + str(args.paths[1]) + "/" + str(tuple[2]) + \
-				"' -t '" + release_t + "' -r '" + release_r + "'" + str(distribution_str) + rebin + maxXaxis + maxLogY + \
-				" --logScaleY --maxYR=2.0 " + \
-				" -o " + str(tuple[0]) + distribution_tuple[-1] + kin_str + type + ".png " + type_postfix
+				command = exe + " -T '" + os.path.join(os.path.dirname(args.paths[0]), tuple[1]) + "' -R '" + os.path.join(os.path.dirname(args.paths[1]), tuple[2]) + \
+						"' -t '" + release_t + "' -r '" + release_r + "'" + str(distribution_str) + rebin + maxXaxis + maxLogY + \
+						" --logScaleY --maxYR=2.0 " + \
+						" -o " + os.path.join(output_dir,  type + distribution_tuple[-1] + kin_str + ".png") + " " + type_postfix
+				print command
+				(out, err) = tools.call_command(command)
+				print command
 
 # --logScaleY --maxLogY=100000 --maxYR=2.0 --rebin=10 --maxXaxis=80 " +
 
