@@ -19,7 +19,7 @@ def readInput():
 	                    help="Output directory. [default: %(default)s]")
 
 	args = parser.parse_args()
-	arg.output_dir = os.path.expandvars(arg.output_dir)
+	args.output_dir = os.path.expandvars(args.output_dir)
 	
 	return args
 

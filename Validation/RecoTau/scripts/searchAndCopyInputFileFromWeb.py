@@ -24,16 +24,15 @@ def readInput():
 	args = parser.parse_args()
 	
 	if not "CMSSW" in args.identifier:
-		print "The identifier has to contain the string 'CMSSW'!"
-		sys.exit(1)
+		args.identifier = "CMSSW_"+args.identifier
 	
-	arg.output_dir = os.path.expandvars(arg.output_dir)
+	args.output_dir = os.path.expandvars(args.output_dir)
 	
 	return args
 
 def copyFiles(exe, filelist, identifier, identifier_folder, args):
 	outDir_parent = str(args.output_dir)
-	outDir = outDir_parent + "_" + identifier + "_" + str(args.tag)
+	outDir = os.path.join(outDir_parent, identifier + "_" + str(args.tag))
 	if os.path.isdir(outDir):
 		print ""
 		input_str_outDir = raw_input(outDir + " already exists. Do you want to delete it? ([n] y): ")
@@ -46,7 +45,7 @@ def copyFiles(exe, filelist, identifier, identifier_folder, args):
 	for filename in filelist:
 		outputFile = os.path.join(outDir, filename)
 		if not os.path.exists(outputFile):
-			exe_temp = "exe{filename} -o {outputFile}".format(exe=exe, filename=filename, outputFile=outputFile)
+			exe_temp = "{exe} {filename} -o {outputFile}".format(exe=exe, filename=filename, outputFile=outputFile)
 			print exe_temp
 			tools.call_command(exe_temp)
 
