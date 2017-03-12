@@ -2,7 +2,7 @@
 
 import argparse
 
-import Validation.tau_validation_tools.webplotting as webplotting
+import Validation.RecoTau.webplotting as webplotting
 
 
 def main():

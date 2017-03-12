@@ -5,7 +5,7 @@ import sys
 import optparse
 import shutil
 
-import Validation.tau_validation_tools.tools as tools
+import Validation.RecoTau.tools as tools
 
 
 def readInput():
@@ -90,7 +90,7 @@ def main():
 
 	output_list = curl_out.split("<tr><td><a href='")
 	for line in output_list:
-		if ".root'>" not in line or identifier not in line or str(options.filter) not in line or (str(options.veto) in line and str(options.veto))
+		if ".root'>" not in line or identifier not in line or str(options.filter) not in line or (str(options.veto) in line and str(options.veto)) \
 			or not ("ZEE" in line or "ZMM" in line or "ZTT" in line or "QCD" in line or "TTbar" in line or "Zprime" in line):
 			continue
 		filename = line.split(".root'>")[-1].split("</a></td><td>")[0]
