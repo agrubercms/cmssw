@@ -1,29 +1,29 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
-import optparse
 import shutil
 import subprocess
 
 def readInput():
-	parser = optparse.OptionParser(description="Plot all standard validation distributions",
-	                               usage="usage: %prog [options] folder ")
-	parser.add_option("-o", "--oldDM", action="store_true", dest="oldDM", default=False, help="Use old DecayModes instead of new ones. [default: %default]")
-	(options, args) = parser.parse_args()
-
-	return args, options
-
+	parser = argparse.ArgumentParser(description="Plot all standard validation distributions")
+	parser.add_argument("paths", nargs=2,
+	                    help="Two paths to compare.")
+	parser.add_argument("-o", "--old-dm", action="store_true", default=False,
+	                    help="Use old DecayModes instead of new ones. [default: %(default)s]")
+	
+	args = parser.parse_args()
+	return args
 
 
 def main():
-	paths, options = readInput()
+	args = readInput()
 
-	exe = "python /.automount/home/home__home1/institut_3a/knutzen/TauReleaseValidation/tau_validation_tools/CMSSW/CMSSW_8_1_0_pre4/src/Validation/RecoTau/Tools/MultipleCompare.py"
-
+	exe = "python "+os.path.expandvars("$CMSSW_BASE4/src/Validation/RecoTau/Tools/MultipleCompare.py")
 
 	#exe + '-T ' + testsample  + "-R " + referencesample + "-t" +testtag+ " -r " + referencetag + distribution + " --logScaleY --maxLogY=100000 --maxYR=2.0 --rebin=10 --maxXaxis=80 -o " + outputfile
-	if options.oldDM:
+	if args.old_dm:
 		discriminator_list = [
 				["DecayModeFindingOldDMsEff", "/MVA6*ElectronRejectionEff", "_AntiEle"],
 				["DecayModeFindingOldDMsEff","*CombinedIsolationDBSumPtCorr3HitsEff", "_Comb_Iso"],
@@ -52,11 +52,11 @@ def main():
 			temp_list.append(discriminator_tuple[-1])
 			distribution_list.append(temp_list)
 
-	input_list_t = os.listdir(paths[0])
-	input_list_r = os.listdir(paths[1])
+	input_list_t = os.listdir(args.paths[0])
+	input_list_r = os.listdir(args.paths[1])
 
-	release_t = paths[0].split("_CMSSW_")[-1]
-	release_r = paths[1].split("_CMSSW_")[-1]
+	release_t = args.paths[0].split("_CMSSW_")[-1]
+	release_r = args.paths[1].split("_CMSSW_")[-1]
 
 	#print input_list_t
 	#print input_list_r
@@ -115,9 +115,9 @@ def main():
 					maxXaxis = " --maxXaxis=200  "
 
 
-				print exe + " -T '" + str(paths[0]) + "/" +  str(tuple[1])   + "' -R '" + str(paths[1]) + "/" + str(tuple[2]) +
-				"' -t '" + release_t + "' -r '" + release_r + "'" + str(distribution_str) + rebin + maxXaxis + maxLogY +\
-				" --logScaleY --maxYR=2.0 " +
+				print exe + " -T '" + str(args.paths[0]) + "/" +  str(tuple[1])   + "' -R '" + str(args.paths[1]) + "/" + str(tuple[2]) + \
+				"' -t '" + release_t + "' -r '" + release_r + "'" + str(distribution_str) + rebin + maxXaxis + maxLogY + \
+				" --logScaleY --maxYR=2.0 " + \
 				" -o " + str(tuple[0]) + distribution_tuple[-1] + kin_str + type + ".png " + type_postfix
 
 # --logScaleY --maxLogY=100000 --maxYR=2.0 --rebin=10 --maxXaxis=80 " +

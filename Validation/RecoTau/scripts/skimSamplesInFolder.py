@@ -1,32 +1,33 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
-import optparse
 import shutil
 import subprocess
 
 def readInput():
-	parser = optparse.OptionParser(description="Perform the skimming for all samples in a folder",
-	                               usage="usage: %prog [options] folder ")
-	parser.add_option("-c", "--config", action="store", metavar="config", dest="config",
-	                  default="$CMSSW_BASE/src/Validation/RecoTau/Tools/GetRecoTauVFromDQM_MC_cff.py",
-	                  #default="$CMSSW_BASE/src/Validation/RecoTau/Tools/GetRecoTauVFromDQM_MC_cff_2.py",
-	                  help="Additional filter on the filenames. [default: %default]")
-	parser.add_option("-o", "--output_dir", action="store", metavar="output_dir", dest="output_dir",
-	                  default="/disk1/knutzen/TauPOG/RelVal/samples/",
-	                  help="Output directory. [default: %default]")
+	parser = argparse.ArgumentParser(description="Perform the skimming for all samples in a folder")
+	parser.add_argument("path",
+	                    help="Input folder.")
+	parser.add_argument("-c", "--config",
+	                    default="$CMSSW_BASE/src/Validation/RecoTau/Tools/GetRecoTauVFromDQM_MC_cff.py",
+	                    #default="$CMSSW_BASE/src/Validation/RecoTau/Tools/GetRecoTauVFromDQM_MC_cff_2.py",
+	                    help="CMSSW configuration. [default: %(default)s]")
+	parser.add_argument("-o", "--output-dir",
+	                    default="$CMSSW_BASE/src/Validation/RecoTau/data/relval_plots",
+	                    help="Output directory. [default: %(default)s]")
 
-	(options, args) = parser.parse_args()
-
-	return options, args[0]
-
+	args = parser.parse_args()
+	arg.output_dir = os.path.expandvars(arg.output_dir)
+	
+	return args
 
 
 def main():
-	options, path = readInput()
+	args = readInput()
 
-	input_list = os.listdir(path)
+	input_list = os.listdir(args.path)
 
 	for sample in input_list:
 		sample_name_new = sample.split("__RelVal")[-1]
@@ -41,7 +42,7 @@ def main():
 		if "TTbar" in sample_name_new or "QCD" in sample_name_new:
 			postfix = "QCD"
 
-		exe = "python " + options.config + " " + path + "/" + sample + " " + path + "/"  + sample_name_new + " " + postfix
+		exe = "python " + args.config + " " + args.path + "/" + sample + " " + args.path + "/"  + sample_name_new + " " + postfix
 		print exe
 		p = subprocess.Popen(exe,
 		stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE, stdin = subprocess.PIPE)

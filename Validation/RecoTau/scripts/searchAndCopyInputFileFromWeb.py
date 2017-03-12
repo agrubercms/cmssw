@@ -1,36 +1,39 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
-import optparse
 import shutil
 
 import Validation.RecoTau.tools as tools
 
 
 def readInput():
-	parser = optparse.OptionParser(description="Get the names of the input files from web.",
-	                               usage="usage: %prog [options] identifier (e.g. CMSSW_8_1_0_pre5) ")
-	parser.add_option("-f", "--filter", action="store", metavar="filter", default="", dest="filter",
-	                  help="Additional filter on the filenames. [default: %default]")
-	parser.add_option("-t", "--tag", action="store", metavar="tag", default="", dest="tag",
-	                  help="Additional name-tag for the folder. [default: %default]")
-	parser.add_option("-v", "--veto", action="store", metavar="veto", default="", dest="veto",
-	                  help="Additional veto on the filenames. [default: %default]")
-	parser.add_option("-o", "--output_dir", action="store", metavar="output_dir", default="/nfs/dust/cms/user/tmuller/taupog/relval/samples/", dest="output_dir",
-	                  help="Output directory. [default: %default]")
-
-	(options, args) = parser.parse_args()
-
-	if len(args) > 1:
-		print "Error: Please state exactly 1 identifier."
+	parser = argparse.ArgumentParser(description="Get the names of the input files from web.")
+	parser.add_argument("identifier",
+	                    help="Identifier (e.g. CMSSW_8_1_0_pre5)")
+	parser.add_argument("-f", "--filter", default="",
+	                    help="Additional filter on the filenames. [default: %(default)s]")
+	parser.add_argument("-t", "--tag", default="",
+	                    help="Additional name-tag for the folder. [default: %(default)s]")
+	parser.add_argument("-v", "--veto", default="",
+	                    help="Additional veto on the filenames. [default: %(default)s]")
+	parser.add_argument("-o", "--output-dir", default="$CMSSW_BASE/src/Validation/RecoTau/data/relval_inputs",
+	                    help="Output directory. [default: %(default)s]")
+	
+	args = parser.parse_args()
+	
+	if not "CMSSW" in args.identifier:
+		print "The identifier has to contain the string 'CMSSW'!"
 		sys.exit(1)
+	
+	arg.output_dir = os.path.expandvars(arg.output_dir)
+	
+	return args
 
-	return options, args[0]
-
-def copyFiles(exe, filelist, identifier, identifier_folder, options):
-	outDir_parent = str(options.output_dir)
-	outDir = outDir_parent + "_" + identifier + "_" + str(options.tag)
+def copyFiles(exe, filelist, identifier, identifier_folder, args):
+	outDir_parent = str(args.output_dir)
+	outDir = outDir_parent + "_" + identifier + "_" + str(args.tag)
 	if os.path.isdir(outDir):
 		print ""
 		input_str_outDir = raw_input(outDir + " already exists. Do you want to delete it? ([n] y): ")
@@ -48,15 +51,12 @@ def copyFiles(exe, filelist, identifier, identifier_folder, options):
 			tools.call_command(exe_temp)
 
 def main():
+	args = readInput()
+	
 	converted_key = "userkey.pem"
 	tools.convert_certificate_key_rsa("~/.globus/userkey.pem", converted_key)
 
-	options, identifier = readInput()
-
-	if not "CMSSW" in identifier:
-		print "The identifier has to contain the string 'CMSSW'"
-		sys.exit(1)
-	cmssw_version_raw_list = identifier.split("CMSSW_")[-1].split("_")
+	cmssw_version_raw_list = args.identifier.split("CMSSW_")[-1].split("_")
 
 	if len(cmssw_version_raw_list) == 3:
 		num0 = cmssw_version_raw_list[0]
@@ -90,7 +90,7 @@ def main():
 
 	output_list = curl_out.split("<tr><td><a href='")
 	for line in output_list:
-		if ".root'>" not in line or identifier not in line or str(options.filter) not in line or (str(options.veto) in line and str(options.veto)) \
+		if ".root'>" not in line or args.identifier not in line or str(args.filter) not in line or (str(args.veto) in line and str(args.veto)) \
 			or not ("ZEE" in line or "ZMM" in line or "ZTT" in line or "QCD" in line or "TTbar" in line or "Zprime" in line):
 			continue
 		filename = line.split(".root'>")[-1].split("</a></td><td>")[0]
@@ -101,7 +101,7 @@ def main():
 	if input_files_decision == "n":
 	   sys.exit(0)
 
-	copyFiles(exe, filename_list, identifier, identifier_folder, options)
+	copyFiles(exe, filename_list, args.identifier, identifier_folder, args)
 	
 	if os.path.exists(converted_key):
 		os.remove(converted_key)
