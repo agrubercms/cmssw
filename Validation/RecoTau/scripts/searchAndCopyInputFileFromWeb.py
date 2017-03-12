@@ -45,7 +45,7 @@ def copyFiles(exe, filelist, identifier, identifier_folder, args):
 	for filename in filelist:
 		outputFile = os.path.join(outDir, filename)
 		if not os.path.exists(outputFile):
-			exe_temp = "{exe} {filename} -o {outputFile}".format(exe=exe, filename=filename, outputFile=outputFile)
+			exe_temp = "{exe}{filename} -o {outputFile}".format(exe=exe, filename=filename, outputFile=outputFile)
 			print exe_temp
 			tools.call_command(exe_temp)
 
