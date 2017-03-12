@@ -16,7 +16,7 @@ def readInput():
 	                    #default="$CMSSW_BASE/src/Validation/RecoTau/Tools/GetRecoTauVFromDQM_MC_cff_2.py",
 	                    help="CMSSW configuration. [default: %(default)s]")
 	parser.add_argument("-o", "--output-dir",
-	                    default="$CMSSW_BASE/src/Validation/RecoTau/data/relval_plots",
+	                    default="$CMSSW_BASE/src/Validation/RecoTau/data/relval_skims",
 	                    help="Output directory. [default: %(default)s]")
 
 	args = parser.parse_args()
