@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import glob
 import os
 import sys
 import shutil
@@ -19,6 +20,7 @@ def readInput():
 	                    help="Output directory. [default: %(default)s]")
 
 	args = parser.parse_args()
+	args.config = os.path.expandvars(args.config)
 	args.output_dir = os.path.expandvars(args.output_dir)
 	
 	return args
@@ -27,22 +29,23 @@ def readInput():
 def main():
 	args = readInput()
 
-	input_list = os.listdir(args.path)
+	input_list = glob.glob(os.path.join(args.path, "*.root"))
+	campaign = args.path[args.path.rfind("CMSSW"):]
 
-	for sample in input_list:
-		sample_name_new = sample.split("__RelVal")[-1]
+	for input_file in input_list:
+		output_file = os.path.join(args.output_dir, campaign, os.path.basename(input_file))
 
 		postfix = ""
-		if "ZTT" in sample_name_new or "Zprime" in sample_name_new:
+		if "ZTT" in output_file or "Zprime" in output_file:
 			postfix = "ZTT"
-		if "ZMM" in sample_name_new:
+		if "ZMM" in output_file:
 			postfix = "ZMM"
-		if "ZEE" in sample_name_new:
+		if "ZEE" in output_file:
 			postfix = "ZEE"
-		if "TTbar" in sample_name_new or "QCD" in sample_name_new:
+		if "TTbar" in output_file or "QCD" in output_file:
 			postfix = "QCD"
 
-		exe = "python " + args.config + " " + args.path + "/" + sample + " " + args.path + "/"  + sample_name_new + " " + postfix
+		exe = "python " + args.config + " " + input_file + " " + output_file + " " + postfix
 		print exe
 		p = subprocess.Popen(exe,
 		stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE, stdin = subprocess.PIPE)
