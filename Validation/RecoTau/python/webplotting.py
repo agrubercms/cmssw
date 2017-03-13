@@ -37,7 +37,7 @@ def webplotting(input_dir, **kwargs):
 	
 	html_texts = {}
 	for var in ["overview", "description", "subdir", "plot", "link"]:
-		with open(os.path.expandvars("$CMSSW_BASE/src/Validation/tau_validation_tools/data/template_webplotting_{}.html".format(var))) as htmlfile:
+		with open(os.path.expandvars("$CMSSW_BASE/src/Validation/RecoTau/data/template_webplotting_{}.html".format(var))) as htmlfile:
 			html_texts[var] = string.Template(htmlfile.read())
 
 	# treat subdirs recursively
