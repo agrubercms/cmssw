@@ -17,6 +17,8 @@ def readInput():
 	                    help="Use old DecayModes instead of new ones. [default: %(default)s]")
 	parser.add_argument("-o", "--output-dir", default="$CMSSW_BASE/src/Validation/RecoTau/data/relval_plots",
 	                    help="Output directory. [default: %(default)s]")
+	parser.add_argument("-n", "--n-processes", type=int, default=1,
+	                    help="Number of parallel processes. [default: %(default)s]")
 	
 	args = parser.parse_args()
 	args.output_dir = os.path.expandvars(args.output_dir)
@@ -83,6 +85,7 @@ def main():
 				sampleMatch = sample2
 		input_output_tuple_list.append([output_name, sample, sampleMatch])
 
+	commands = []
 	for type in type_list:
 		for tuple in input_output_tuple_list:
 			for distribution_tuple in distribution_list:
@@ -126,12 +129,10 @@ def main():
 						"' -t '" + release_t + "' -r '" + release_r + "'" + str(distribution_str) + rebin + maxXaxis + maxLogY + \
 						" --logScaleY --maxYR=2.0 " + \
 						" -o " + os.path.join(output_dir,  type + distribution_tuple[-1] + kin_str + ".png") + " " + type_postfix
-				print command
-				(out, err) = tools.call_command(command)
-				print command
-
 # --logScaleY --maxLogY=100000 --maxYR=2.0 --rebin=10 --maxXaxis=80 " +
-
+				commands.append(command)
+	
+	tools.parallelize(tools.call_command, commands, n_processes=args.n_processes)
 
 
 if __name__ == "__main__":
