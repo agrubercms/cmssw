@@ -20,6 +20,8 @@ def readInput():
 	                    help="Additional veto on the filenames. [default: %(default)s]")
 	parser.add_argument("-o", "--output-dir", default="$CMSSW_BASE/src/Validation/RecoTau/data/relval_inputs",
 	                    help="Output directory. [default: %(default)s]")
+	parser.add_argument("-n", "--n-processes", type=int, default=1,
+	                    help="Number of parallel processes. [default: %(default)s]")
 	
 	args = parser.parse_args()
 	
@@ -42,12 +44,13 @@ def copyFiles(exe, filelist, identifier, identifier_folder, args):
 	if not os.path.exists(outDir):
 		os.makedirs(outDir)
 
+	commands = []
 	for filename in filelist:
 		outputFile = os.path.join(outDir, filename)
 		if not os.path.exists(outputFile):
-			exe_temp = "{exe}{filename} -o {outputFile}".format(exe=exe, filename=filename, outputFile=outputFile)
-			print exe_temp
-			tools.call_command(exe_temp)
+			commands.append("{exe}{filename} -o {outputFile}".format(exe=exe, filename=filename, outputFile=outputFile))
+	
+	tools.parallelize(tools.call_command, commands, n_processes=args.n_processes)
 
 def main():
 	args = readInput()
