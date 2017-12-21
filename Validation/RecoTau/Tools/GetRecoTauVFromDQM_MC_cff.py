@@ -58,6 +58,10 @@ for key in next:
                             if(cl4.InheritsFrom("TDirectory")):
                                 dir4=key.ReadObj()
                                 dirFound3 = dir4.GetName()
+				break
+			break
+	      break
+       break
 
 InputDir = dirFound0+"/"+dirFound1+"/"+dirFound2+"/"+dirFound3
 ROOT.gDirectory.cd(InputDir)

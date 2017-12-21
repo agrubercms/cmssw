@@ -32,8 +32,8 @@ def LoadCommandlineOptions(argv):
   parser.add_option('--minLogX',metavar='number', type=float,help='Sets the minimum of the scale in log scale (requires --logScale or -f to work)',dest='minLogX',default = 0.001)
   parser.add_option('--minLogY',metavar='number', type=float,help='Sets the minimum of the scale in log scale (requires --logScale or -f to work)',dest='minLogY',default = 0.0001)
   parser.add_option('--maxLogY',metavar='number', type=float,help='Sets the maximum of the scale in log scale (requires --logScale or -f to work)',dest='maxLogY',default = 3)
-  parser.add_option('--minYR',metavar='number', type=float,help='Sets the minimum of the scale in sub pad',dest='minYR',default = 0)
-  parser.add_option('--maxYR',metavar='number', type=float,help='Sets the maximum of the scale in sub pad',dest='maxYR',default = 1.2)
+  parser.add_option('--minYR',metavar='number', type=float,help='Sets the minimum of the scale in sub pad',dest='minYR',default = 0.0)
+  parser.add_option('--maxYR',metavar='number', type=float,help='Sets the maximum of the scale in sub pad',dest='maxYR',default = 2.0)
 #  parser.add_option('--minDivY',metavar='number', type=float,help='Sets the minimum of the scale in the ratio pad',dest='minDivY',default = 0.)
 #  parser.add_option('--maxDivY',metavar='number', type=float,help='Sets the maximum of the scale in the ratio pad',dest='maxDivY',default = 2)
 #  parser.add_option('--minDivX',metavar='number', type=float,help='Sets the minimum of the scale in the ratio pad',dest='minDivX',default = 0.)
@@ -126,14 +126,14 @@ def DetermineHistType(name):
   #print 'type is ' + type
   return [type, label, prefix]
 
-def DrawTitle(text):
+def DrawTitle(text,num):
 	title = TLatex()
 	title.SetNDC()
 	title.SetTextAlign(12)#3*10=right,3*1=top
-	title.SetTextSize(.035)	
+	title.SetTextSize(.030)	
 	leftMargin = gStyle.GetPadLeftMargin()
 	topMargin = 1 - 0.5*gStyle.GetPadTopMargin()
-	title.DrawLatex(leftMargin, topMargin, text)
+	title.DrawLatex(leftMargin, topMargin+num*0.03, text)
 
 def DrawBranding(options, label=''):
   if options.branding != None or label != '':
@@ -184,7 +184,6 @@ def Rebin(tfile, histoPath, rebinVal):
     if not isinstance(denSingle, TH1F):
         print('Looking for '+denSingle)
         print('Plot now found! What the hell are you doing? Exiting...')
-        sys.exit()
     num.Rebin(rebinVal)
     den = denSingle.Rebin(rebinVal,'denClone')
     retVal = num.Clone(histoPath+'Rebin%s'%rebinVal)
@@ -277,11 +276,13 @@ def optimizeRangeSubPad(argv, pad, hists, maxLogX_, minX_, maxX_, minYRatio_, ma
   max = -1
   if minYRatio_ > 0:
     min = minYRatio_
-  if maxYRatio_ > 0:
+  if maxYRatio_ < 2:
     max = maxYRatio_
   min, max = findRange(hists, min, max)
-  if max > 2:
-    max = 2 #maximal bound
+  if max > 2: max = 2 #maximal bound
+  if min < 0: min = 0
+  if min > 2-max: min = 2-max #Want to have 1.0 in the middle of the ratio plot
+  if max < 2-min: max = 2-min
   hists[0].SetAxisRange(min, max, "Y")                                     
 
 def getMaximumIncludingErrors(hist):
@@ -289,7 +290,7 @@ def getMaximumIncludingErrors(hist):
   distance = 1.
   max = -1
   pos = 0
-  for i in range(1, hist.GetNbinsX()):
+  for i in range(1, hist.GetNbinsX()+1):
     if hist.GetBinContent(i) > max:#ignore errors here
       max = hist.GetBinContent(i)
       pos = i
@@ -301,7 +302,7 @@ def getMinimumIncludingErrors(hist):
   distance = 1.
   min = -1
   pos = 0
-  for i in range(1, hist.GetNbinsX()):
+  for i in range(1, hist.GetNbinsX()+1):
     if hist.GetBinContent(i)<=0.:#ignore errors here
       continue
     if hist.GetBinContent(i) < min or min==-1:
@@ -375,8 +376,8 @@ def main(argv=None):
     drawStats = True
 
   #legend = TLegend(0.50,0.73,0.50+0.37,1)
-  x1 = 0.33
-  x2 = 1-gStyle.GetPadRightMargin()
+  x1 = 1-gStyle.GetPadRightMargin()
+  x2 = 1-gStyle.GetPadRightMargin()+0.25
   y2 = 1-gStyle.GetPadTopMargin()
   lineHeight = .055
   if len(histoList) == 1:
@@ -396,28 +397,28 @@ def main(argv=None):
     statsBox.SetBorderSize(1)
 
     
-  canvas = TCanvas('MultiPlot','MultiPlot',validation.standardDrawingStuff.canvasSizeX.value(),832)
-  effPad = TPad('effPad','effPad',0.01,0.35,0.99,0.99)#0,0.25,1.,1.,0,0)
+  canvas = TCanvas('MultiPlot','MultiPlot',1280,832)
+  effPad = TPad('effPad','effPad',0.01,0.35,0.74,0.99)#0,0.25,1.,1.,0,0)
   effPad.SetBottomMargin(0.0)#0.1)
   #effPad.SetTopMargin(0.1)
   #effPad.SetLeftMargin(0.13)
   #effPad.SetRightMargin(0.07)
   effPad.Draw()
-  header = ''
-  if options.sampleLabel != None:
-    header += 'Sample: '+options.sampleLabel
+  #header = ''
+  #if options.sampleLabel != None:
+  #  header += 'Sample: '+options.sampleLabel
   if options.testLabel != None:
-    header += ' Dots: '+options.testLabel
+    DrawTitle('Dots: '+options.testLabel,1)
   if options.refLabel != None:
-    header += ' Line: '+options.refLabel
-  DrawTitle(header)
+    DrawTitle('Line: '+options.refLabel,0)
+  #DrawTitle(header,0)
   DrawBranding(options)
-  diffPad = TPad('diffPad','diffPad',0.01,0.01,0.99,0.32)#0.,0.,1,.25,0,0)
+  diffPad = TPad('diffPad','diffPad',0.01,0.01,0.74,0.32)#0.,0.,1,.25,0,0)
   diffPad.SetTopMargin(0.00);
   diffPad.SetBottomMargin(0.30);
   diffPad.Draw()
-  colors = [2,3,4,6,5,7,28,1,2,3,4,6,5,7,28,1,2,3,4,6,5,7,28,1,2,3,4,6,5,7,28,1,2,3,4,6,5,7,28,1]
-  first = True
+  colors = [1,2,8,4,28,41,38,6,42,9,2,3,4,6,5,7,28,1,2,3,4,6,5,7,28,1,2,3,4,6,5,7,28,1,2,3,4,6,5,7,28,1,2,3,4,6,5,7,28,1]
+  first = 0
   divHistos = []
   statTemplate = '%s Mean: %.3f RMS: %.3f'
   testHs = []
@@ -446,9 +447,17 @@ def main(argv=None):
     testH.GetYaxis().SetTitleOffset(1.1)
     #testH.GetYaxis().SetTitleSize(0.08)
     #testH.GetYaxis().CenterTitle()
-    testH.SetMarkerSize(1)
+    testH.SetMarkerSize(0.75)
     testH.SetMarkerStyle(20)
     testH.SetMarkerColor(color)
+    testH.SetLineColor(color)
+
+    if first==0:
+
+      shift = testH.GetBinWidth(1)/10.0
+      if shift > (options.maxXaxis-options.minXaxis)/900.0*4: shift = (options.maxXaxis-options.minXaxis)/900.0*4 # maximum ~4 pixel shift
+
+    testH.GetXaxis().SetLimits(testH.GetXaxis().GetXmin()+(shift*(first-(len(histoList)-1)/2)), testH.GetXaxis().GetXmax()+(shift*(first-(len(histoList)-1)/2)))
     if histType == 'Eff':
       legend.AddEntry(testH,histoPath[histoPath.rfind('/')+1:histoPath.find(histType)],'p')
     else:
@@ -456,8 +465,7 @@ def main(argv=None):
     if drawStats:
         text = statsBox.AddText(statTemplate % ('Dots',testH.GetMean(), testH.GetRMS()) )
         text.SetTextColor(color)
-    if first:
-        first = False
+    if first==0:
         if options.logScaleY:
             effPad.SetLogy()
         if options.logScaleX:
@@ -480,6 +488,7 @@ def main(argv=None):
             testH.DrawNormalized('same p')
         else:
             testH.Draw('same ex0 l')
+    first += 1
     if refFile == None:
         continue
     if(options.rebin == -1):
@@ -512,37 +521,44 @@ def main(argv=None):
     refH.Draw('same hist')
     divHistos.append(Divide(testH,refH))
 
-    if options.maxLogY > 0:
-       maxlY=options.maxLogY
-    if options.maxLogX > 0:
-       maxlX=options.maxLogX
+    #if options.maxLogY > 0:
+  maxlY=options.maxLogY
+    #if options.maxLogX > 0:
+  maxlX=options.maxLogX
 
   tmpHists = []
   tmpHists.extend(testHs)
   tmpHists.extend(refHs)
   optimizeRangeMainPad(argv, effPad, tmpHists, maxlX, options.minXaxis, options.maxXaxis, maxlY, options.minYaxis, options.maxYaxis)
   
-  firstD = True
+  firstD = 0
   if refFile != None:
     for histo,color in zip(divHistos,colors):
+#      histo.GetXaxis().SetLimits(options.minXaxis, options.maxXaxis)  #This doesn't need to be done twice
+
+#      if firstD==0:  #This doesn't need to be done twice
+#        shiftD = histo.GetBinWidth(1)/10.0
+#        if shiftD > (options.maxXaxis-options.minXaxis)/900.0*4: shiftD = (options.maxXaxis-options.minXaxis)/900.0*4 # maximum ~4 pixel shift
       diffPad.cd()
-      histo.SetMarkerSize(1)
+      histo.SetMarkerSize(0.75)
       histo.SetMarkerStyle(20)
       histo.SetMarkerColor(color)
+      histo.SetLineColor(color)
       histo.GetYaxis().SetLabelSize(0.07)
       histo.GetYaxis().SetTitleOffset(0.75)
       histo.GetYaxis().SetTitleSize(0.08)
       histo.GetXaxis().SetLabelSize(0.08)
       histo.GetXaxis().SetTitleSize(0.08)
       #histo.GetYaxis().CenterTitle()
+#      histo.GetXaxis().SetLimits(histo.GetXaxis().GetXmin()+(shiftD*(firstD-(len(divHistos)-1)/2)), histo.GetXaxis().GetXmax()+(shiftD*(firstD-(len(divHistos)-1)/2))) #This doesn't need to be done twice
                                          
 
-      if firstD:
+      if firstD==0:
         histo.Draw('ex0')
-        firstD = False
       else:
         histo.Draw('same ex0')
         diffPad.Update()
+      firstD += 1
         
     if options.maxLogX > 0:
       maxlX=options.maxLogX

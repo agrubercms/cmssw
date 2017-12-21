@@ -52,7 +52,7 @@ def webplotting(input_dir, **kwargs):
 		html_desciption = html_texts["description"].substitute(subdirs="")
 	
 	html_plots = ""
-	for filename, extensions in plot_files.iteritems():
+	for filename, extensions in sorted(plot_files.iteritems()):
 		html_plots += html_texts["plot"].substitute(
 				plot=filename+"."+extensions[0],
 				title=filename,
