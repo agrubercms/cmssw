@@ -44,7 +44,7 @@ def main():
 			os.makedirs(os.path.dirname(output_file))
 
 		postfix = ""
-		if "ZTT" in input_file or "Zprime" in input_file:
+		if "ZTT" in input_file or "Zprime" in input_file or "TenTau" in input_file:
 			postfix = "ZTT"
 		if "ZMM" in input_file:
 			postfix = "ZMM"
@@ -52,14 +52,8 @@ def main():
 			postfix = "ZEE"
 		if "TTbar" in input_file or "QCD" in input_file:
 			postfix = "QCD"
-		if "SingleMuon" in input_file:
-			postfix = "RealData"
 
 		commands.append("python " + args.config + " " + input_file + " " + output_file + " " + postfix)
-
-		#if "SingleMuon" in input_file:
-		#	commands.append("python " + args.config + " " + input_file + " " + output_file + " RealElectronsData")
-		#	commands.append("python " + args.config + " " + input_file + " " + output_file + " RealMuonsData")
 	
 	tools.parallelize(tools.call_command, commands, n_processes=args.n_processes)
 

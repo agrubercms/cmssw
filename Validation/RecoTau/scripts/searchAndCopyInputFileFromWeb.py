@@ -60,14 +60,14 @@ def main():
 
 	cmssw_version_raw_list = args.identifier.split("CMSSW_")[-1].split("_")
 
-	if len(cmssw_version_raw_list) == 3:
+	if len(cmssw_version_raw_list) > 2:
 		num0 = cmssw_version_raw_list[0]
 		num1 = cmssw_version_raw_list[1]
 		num2 = cmssw_version_raw_list[2]
-	elif len(cmssw_version_raw_list) == 4:
-		num0 = cmssw_version_raw_list[0]
-		num1 = cmssw_version_raw_list[1]
-		num2 = cmssw_version_raw_list[2]
+	#elif len(cmssw_version_raw_list) == 4:
+	#	num0 = cmssw_version_raw_list[0]
+	#	num1 = cmssw_version_raw_list[1]
+	#	num2 = cmssw_version_raw_list[2]
 	else:
 		print "Error: Cannot parse identifier."
 		print "The identifier has to match the pattern: CMSSW_Z_Y_X(_A)"
@@ -92,8 +92,8 @@ def main():
 
 	output_list = curl_out.split("<tr><td><a href='")
 	for line in output_list:
-		if ".root'>" not in line or args.identifier not in line or str(args.filter) not in line or (str(args.veto) in line and str(args.veto)) \
-			or not ("ZEE" in line or "ZMM" in line or "ZTT" in line or "QCD" in line or "TTbar" in line or "Zprime" in line):
+		if ".root'>" not in line or args.identifier+'-' not in line or str(args.filter) not in line or (str(args.veto) in line and str(args.veto)) \
+			or not ("ZEE" in line or "ZMM" in line or "ZTT" in line or "QCD" in line or "TTbar" in line or "Zprime" in line or "TenTau" in line):
 			continue
 		filename = line.split(".root'>")[-1].split("</a></td><td>")[0]
 		print filename

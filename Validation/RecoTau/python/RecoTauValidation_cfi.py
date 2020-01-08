@@ -308,7 +308,7 @@ drawOptStuff = cms.PSet(
 drawOptModifiers = [['eff_overlay01',['markerColor','lineColor'],[1,1]],['eff_overlay02',['markerColor','lineColor'],[2,2]],['eff_overlay03',['markerColor','lineColor'],[3,3]],['eff_overlay04',['markerColor','lineColor'],[4,4]],['eff_overlay05',['markerColor','lineColor'],[6,6]],['eff_overlay06',['markerColor','lineColor'],[5,5]],['eff_overlay07',['markerColor','lineColor'],[7,7]],['eff_overlay08',['markerColor','lineColor'],[28,28]],['eff_overlay09',['markerColor','lineColor','markerStyle'],[2,2,29]],['eff_overlay010',['markerColor','lineColor','markerStyle'],[4,4,29]],['eff_overlay011',['markerColor','lineColor','markerStyle'],[6,6,29]]]
 
 standardDrawingStuff = cms.PSet(
-  canvasSizeX = cms.int32(640),
+  canvasSizeX = cms.int32(1280),
   canvasSizeY = cms.int32(640),                         
   indOutputFileName = cms.string('#PLOT#.png'),
   xAxes = Utils.SpawnPSet(xModifiers,xAxisStuff),

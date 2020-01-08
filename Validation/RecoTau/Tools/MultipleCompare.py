@@ -25,6 +25,7 @@ def LoadCommandlineOptions(argv):
   parser.add_option('--logScaleY',action="store_true", dest="logScaleY", default=False, help="Sets the log scale in the plot (Y axis)")
   parser.add_option('--logScaleX',action="store_true", dest="logScaleX", default=False, help="Sets the log scale in the plot (X axis)")
   parser.add_option('--fakeRate','-f',action="store_true", dest="fakeRate", default=False, help="Sets the fake rate options and put the correct label (implies --logScale)")
+  parser.add_option('--events','-e',action="store_true", dest="events", default=False, help="Sets the events options and put the correct label (implies --logScale)")
   parser.add_option('--testLabel','-t',metavar='testLabel', type=str,help='Sets the label to put in the plots for test file',dest='testLabel',default = None)
   parser.add_option('--refLabel','-r',metavar='refLabel', type=str,help='Sets the label to put in the plots for ref file',dest='refLabel',default = None)
   parser.add_option('--sampleLabel','-s',metavar='sampleLabel', type=str,help='Sets the label to indicate the sample used',dest='sampleLabel',default = None)
@@ -33,7 +34,7 @@ def LoadCommandlineOptions(argv):
   parser.add_option('--minLogY',metavar='number', type=float,help='Sets the minimum of the scale in log scale (requires --logScale or -f to work)',dest='minLogY',default = 0.0001)
   parser.add_option('--maxLogY',metavar='number', type=float,help='Sets the maximum of the scale in log scale (requires --logScale or -f to work)',dest='maxLogY',default = 3)
   parser.add_option('--minYR',metavar='number', type=float,help='Sets the minimum of the scale in sub pad',dest='minYR',default = 0.0)
-  parser.add_option('--maxYR',metavar='number', type=float,help='Sets the maximum of the scale in sub pad',dest='maxYR',default = 2.0)
+  parser.add_option('--maxYR',metavar='number', type=float,help='Sets the maximum of the scale in sub pad',dest='maxYR',default = 1.2)
 #  parser.add_option('--minDivY',metavar='number', type=float,help='Sets the minimum of the scale in the ratio pad',dest='minDivY',default = 0.)
 #  parser.add_option('--maxDivY',metavar='number', type=float,help='Sets the maximum of the scale in the ratio pad',dest='maxDivY',default = 2)
 #  parser.add_option('--minDivX',metavar='number', type=float,help='Sets the minimum of the scale in the ratio pad',dest='minDivX',default = 0.)
@@ -174,6 +175,11 @@ def FindParents(histoPath):
     return [num,den]
 
 def Rebin(tfile, histoPath, rebinVal):
+  if 'miniAODValidation' in histoPath: # Plots aren't efficiencies
+    num = tfile.Get(histoPath)
+    num.Rebin(rebinVal)
+    return num
+  else:
     parents = FindParents(histoPath)
     num = tfile.Get(parents[0])
     if not isinstance(num, TH1F):
@@ -370,6 +376,8 @@ def main(argv=None):
 
   if options.fakeRate:
     ylabel = 'Fake rate'
+  elif options.events:
+    ylabel = 'Events'
 
   drawStats = False
   if histType=='pTRatio' and len(histoList)<3:
@@ -451,12 +459,9 @@ def main(argv=None):
     testH.SetMarkerStyle(20)
     testH.SetMarkerColor(color)
     testH.SetLineColor(color)
-
     if first==0:
-
-      shift = testH.GetBinWidth(1)/10.0
-      if shift > (options.maxXaxis-options.minXaxis)/900.0*4: shift = (options.maxXaxis-options.minXaxis)/900.0*4 # maximum ~4 pixel shift
-
+      shift = 0.001*testH.GetBinWidth(1)*testH.GetXaxis().GetNbins() if options.maxXaxis==800 else 0.001*(options.maxXaxis-options.minXaxis)
+      if testH.GetXaxis().GetNbins()*len(histoList)<50: shift*=2
     testH.GetXaxis().SetLimits(testH.GetXaxis().GetXmin()+(shift*(first-(len(histoList)-1)/2)), testH.GetXaxis().GetXmax()+(shift*(first-(len(histoList)-1)/2)))
     if histType == 'Eff':
       legend.AddEntry(testH,histoPath[histoPath.rfind('/')+1:histoPath.find(histType)],'p')
@@ -534,11 +539,8 @@ def main(argv=None):
   firstD = 0
   if refFile != None:
     for histo,color in zip(divHistos,colors):
-#      histo.GetXaxis().SetLimits(options.minXaxis, options.maxXaxis)  #This doesn't need to be done twice
-
-#      if firstD==0:  #This doesn't need to be done twice
-#        shiftD = histo.GetBinWidth(1)/10.0
-#        if shiftD > (options.maxXaxis-options.minXaxis)/900.0*4: shiftD = (options.maxXaxis-options.minXaxis)/900.0*4 # maximum ~4 pixel shift
+      if firstD==0:
+	shiftD = 0.001*histo.GetBinWidth(1)*histo.GetXaxis().GetNbins() if options.maxXaxis==800 else 0.001*(options.maxXaxis-options.minXaxis)
       diffPad.cd()
       histo.SetMarkerSize(0.75)
       histo.SetMarkerStyle(20)
@@ -550,7 +552,9 @@ def main(argv=None):
       histo.GetXaxis().SetLabelSize(0.08)
       histo.GetXaxis().SetTitleSize(0.08)
       #histo.GetYaxis().CenterTitle()
-#      histo.GetXaxis().SetLimits(histo.GetXaxis().GetXmin()+(shiftD*(firstD-(len(divHistos)-1)/2)), histo.GetXaxis().GetXmax()+(shiftD*(firstD-(len(divHistos)-1)/2))) #This doesn't need to be done twice
+      #print histo.GetXaxis().GetXmin()+(shiftD*(firstD-(len(divHistos)-1)/2))
+      #print histo.GetXaxis().GetXmax()+(shiftD*(firstD-(len(divHistos)-1)/2))
+      histo.GetXaxis().SetLimits(histo.GetXaxis().GetXmin()+(shiftD*(firstD-(len(divHistos)-1)/2)), histo.GetXaxis().GetXmax()+(shiftD*(firstD-(len(divHistos)-1)/2)))
                                          
 
       if firstD==0:
