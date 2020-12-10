@@ -34,7 +34,8 @@ def main():
 	
 	parameterset = {
                 ########### ZTT old
-		'ZTT':[['AntiEle_pt_eff',"DecayModeFindingNewDMsEffpt /MVA6*ElectronRejectionEffpt  --rebin=10 --maxXaxis=200   --maxLogY=1.4  --logScaleY "],
+		'ZTT':[
+			   ['AntiEle_pt_eff',"DecayModeFindingNewDMsEffpt /MVA6*ElectronRejectionEffpt  --rebin=10 --maxXaxis=200   --maxLogY=1.4  --logScaleY "],
 			   ['Comb_Iso_pt_eff',"DecayModeFindingNewDMsEffpt *CombinedIsolationDBSumPtCorr3HitsEffpt  --rebin=10 --maxXaxis=200   --maxLogY=1.4  --logScaleY "],
 			   ['MVA_Iso_pt_eff',"DecayModeFindingNewDMsEffpt *IsolationMVArun2v1DBnewDMwLTEffpt  --rebin=10 --maxXaxis=200   --maxLogY=1.4  --logScaleY "],
 			   ['AntiMu_pt_eff',"DecayModeFindingNewDMsEffpt /*MuonRejection3Effpt  --rebin=10 --maxXaxis=200   --maxLogY=1.4  --logScaleY "],
@@ -46,13 +47,15 @@ def main():
 			   ['Comb_Iso_phi_eff',"DecayModeFindingNewDMsEffphi *CombinedIsolationDBSumPtCorr3HitsEffphi  --maxXaxis=200 --minXaxis=-200 --rebin=10 --maxLogY=1.4  --logScaleY "],
 			   ['MVA_Iso_phi_eff',"DecayModeFindingNewDMsEffphi *IsolationMVArun2v1DBnewDMwLTEffphi  --maxXaxis=200 --minXaxis=-200 --rebin=10 --maxLogY=1.4  --logScaleY "],
 			   ['AntiMu_phi_eff',"DecayModeFindingNewDMsEffphi /*MuonRejection3Effphi  --maxXaxis=200 --minXaxis=-200 --rebin=10 --maxLogY=1.4  --logScaleY "],
-			   ['AntiEle_pileup_eff',"DecayModeFindingNewDMsEffpileup /MVA6*ElectronRejectionEffpileup  --maxXaxis=80  --rebin=10 --maxLogY=1.4  --logScaleY "],
-			   ['Comb_Iso_pileup_eff',"DecayModeFindingNewDMsEffpileup *CombinedIsolationDBSumPtCorr3HitsEffpileup  --maxXaxis=80  --rebin=10 --maxLogY=1.4  --logScaleY "],
-			   ['MVA_Iso_pileup_eff',"DecayModeFindingNewDMsEffpileup *IsolationMVArun2v1DBnewDMwLTEffpileup  --maxXaxis=80  --rebin=10 --maxLogY=1.4  --logScaleY "],
-			   ['AntiMu_pileup_eff',"DecayModeFindingNewDMsEffpileup /*MuonRejection3Effpileup  --maxXaxis=80  --rebin=10 --maxLogY=1.4  --logScaleY "]],
+			   ['AntiEle_pileup_eff',"DecayModeFindingNewDMsEffpileup /MVA6*ElectronRejectionEffpileup  --rebin=10 --maxLogY=1.4  --logScaleY "],
+			   ['Comb_Iso_pileup_eff',"DecayModeFindingNewDMsEffpileup *CombinedIsolationDBSumPtCorr3HitsEffpileup  --rebin=10 --maxLogY=1.4  --logScaleY "],
+			   ['MVA_Iso_pileup_eff',"DecayModeFindingNewDMsEffpileup *IsolationMVArun2v1DBnewDMwLTEffpileup  --rebin=10 --maxLogY=1.4  --logScaleY "],
+			   ['AntiMu_pileup_eff',"DecayModeFindingNewDMsEffpileup /*MuonRejection3Effpileup --rebin=10 --maxLogY=1.4  --logScaleY "]
+			   ],
 
                 ########### TenTau old
-		'TenTau':[['AntiEle_pt_eff',"DecayModeFindingNewDMsEffpt /MVA6*ElectronRejectionEffpt  --maxXaxis=200  --rebin=10 --maxLogY=1.4  --logScaleY "],
+		'TenTau':[
+			   ['AntiEle_pt_eff',"DecayModeFindingNewDMsEffpt /MVA6*ElectronRejectionEffpt  --maxXaxis=200  --rebin=10 --maxLogY=1.4  --logScaleY "],
 			   ['Comb_Iso_pt_eff',"DecayModeFindingNewDMsEffpt *CombinedIsolationDBSumPtCorr3HitsEffpt  --maxXaxis=200  --rebin=10 --maxLogY=1.4  --logScaleY "],
 			   ['MVA_Iso_pt_eff',"DecayModeFindingNewDMsEffpt *IsolationMVArun2v1DBnewDMwLTEffpt  --maxXaxis=200  --rebin=10 --maxLogY=1.4  --logScaleY "],
 			   ['AntiMu_pt_eff',"DecayModeFindingNewDMsEffpt /*MuonRejection3Effpt  --maxXaxis=200  --rebin=10 --maxLogY=1.4  --logScaleY "],
@@ -64,32 +67,35 @@ def main():
 			   ['Comb_Iso_phi_eff',"DecayModeFindingNewDMsEffphi *CombinedIsolationDBSumPtCorr3HitsEffphi  --maxXaxis=200 --minXaxis=-200 --rebin=10 --maxLogY=1.4  --logScaleY "],
 			   ['MVA_Iso_phi_eff',"DecayModeFindingNewDMsEffphi *IsolationMVArun2v1DBnewDMwLTEffphi  --maxXaxis=200 --minXaxis=-200 --rebin=10 --maxLogY=1.4  --logScaleY "],
 			   ['AntiMu_phi_eff',"DecayModeFindingNewDMsEffphi /*MuonRejection3Effphi  --maxXaxis=200 --minXaxis=-200 --rebin=10 --maxLogY=1.4  --logScaleY "],
-			   ['AntiEle_pileup_eff',"DecayModeFindingNewDMsEffpileup /MVA6*ElectronRejectionEffpileup  --maxXaxis=80  --rebin=10 --maxLogY=1.4  --logScaleY "],
-			   ['Comb_Iso_pileup_eff',"DecayModeFindingNewDMsEffpileup *CombinedIsolationDBSumPtCorr3HitsEffpileup  --maxXaxis=80  --rebin=10 --maxLogY=1.4  --logScaleY "],
-			   ['MVA_Iso_pileup_eff',"DecayModeFindingNewDMsEffpileup *IsolationMVArun2v1DBnewDMwLTEffpileup  --maxXaxis=80  --rebin=10 --maxLogY=1.4  --logScaleY "],
-			   ['AntiMu_pileup_eff',"DecayModeFindingNewDMsEffpileup /*MuonRejection3Effpileup  --maxXaxis=80  --rebin=10 --maxLogY=1.4  --logScaleY "]],
+			   ['AntiEle_pileup_eff',"DecayModeFindingNewDMsEffpileup /MVA6*ElectronRejectionEffpileup  --rebin=10 --maxLogY=1.4  --logScaleY "],
+			   ['Comb_Iso_pileup_eff',"DecayModeFindingNewDMsEffpileup *CombinedIsolationDBSumPtCorr3HitsEffpileup  --rebin=10 --maxLogY=1.4  --logScaleY "],
+			   ['MVA_Iso_pileup_eff',"DecayModeFindingNewDMsEffpileup *IsolationMVArun2v1DBnewDMwLTEffpileup  --rebin=10 --maxLogY=1.4  --logScaleY "],
+			   ['AntiMu_pileup_eff',"DecayModeFindingNewDMsEffpileup /*MuonRejection3Effpileup  --rebin=10 --maxLogY=1.4  --logScaleY "]],
 
-                ########### TTbar old
-		'TTbar':[['Comb_Iso_pt_fake',"DecayModeFindingNewDMsEffpt *CombinedIsolationDBSumPtCorr3HitsEffpt  --rebin=10  --maxXaxis=200   --maxLogY=1.4  --logScaleY --fakeRate"],
+        #         ########### TTbar old
+		'TTbar':[
+				 ['Comb_Iso_pt_fake',"DecayModeFindingNewDMsEffpt *CombinedIsolationDBSumPtCorr3HitsEffpt  --rebin=10  --maxXaxis=200   --maxLogY=1.4  --logScaleY --fakeRate"],
 				 ['MVA_Iso_pt_fake',"DecayModeFindingNewDMsEffpt *IsolationMVArun2v1DBnewDMwLTEffpt  --rebin=10  --maxXaxis=200   --maxLogY=1.4  --logScaleY --fakeRate"],
 				 ['Comb_Iso_eta_fake',"DecayModeFindingNewDMsEffeta *CombinedIsolationDBSumPtCorr3HitsEffeta  --rebin=10  --maxLogY=1.4  --logScaleY --fakeRate"],
 				 ['MVA_Iso_eta_fake',"DecayModeFindingNewDMsEffeta *IsolationMVArun2v1DBnewDMwLTEffeta  --rebin=10  --maxLogY=1.4  --logScaleY --fakeRate"],
 				 ['Comb_Iso_phi_fake',"DecayModeFindingNewDMsEffphi *CombinedIsolationDBSumPtCorr3HitsEffphi  --rebin=10  --maxXaxis=200 --minXaxis=-200  --maxLogY=1.4  --logScaleY --fakeRate"],
 				 ['MVA_Iso_phi_fake',"DecayModeFindingNewDMsEffphi *IsolationMVArun2v1DBnewDMwLTEffphi  --rebin=10  --maxXaxis=200 --minXaxis=-200  --maxLogY=1.4  --logScaleY --fakeRate"],
-				 ['Comb_Iso_pileup_fake',"DecayModeFindingNewDMsEffpileup *CombinedIsolationDBSumPtCorr3HitsEffpileup  --rebin=10  --maxXaxis=80   --maxLogY=1.4  --logScaleY --fakeRate"],
-				 ['MVA_Iso_pileup_fake',"DecayModeFindingNewDMsEffpileup *IsolationMVArun2v1DBnewDMwLTEffpileup  --rebin=10  --maxXaxis=80   --maxLogY=1.4  --logScaleY --fakeRate"]],
+				 ['Comb_Iso_pileup_fake',"DecayModeFindingNewDMsEffpileup *CombinedIsolationDBSumPtCorr3HitsEffpileup  --rebin=10   --maxLogY=1.4  --logScaleY --fakeRate"],
+				 ['MVA_Iso_pileup_fake',"DecayModeFindingNewDMsEffpileup *IsolationMVArun2v1DBnewDMwLTEffpileup  --rebin=10   --maxLogY=1.4  --logScaleY --fakeRate"]],
 
-                ########### ZEE old
-		'ZEE':[['AntiEle_pt_fake',"DecayModeFindingNewDMsEffpt /MVA6*ElectronRejectionEffpt  --rebin=10  --maxXaxis=200   --maxLogY=1.4  --logScaleY --fakeRate"],
+        #         ########### ZEE old
+		'ZEE':[
+		['AntiEle_pt_fake',"DecayModeFindingNewDMsEffpt /MVA6*ElectronRejectionEffpt  --rebin=10  --maxXaxis=200   --maxLogY=1.4  --logScaleY --fakeRate"],
 			   ['AntiEle_eta_fake',"DecayModeFindingNewDMsEffeta /MVA6*ElectronRejectionEffeta  --rebin=10  --maxLogY=1.4  --logScaleY --fakeRate"],
 			   ['AntiEle_phi_fake',"DecayModeFindingNewDMsEffphi /MVA6*ElectronRejectionEffphi  --rebin=10  --maxXaxis=200 --minXaxis=-200  --maxLogY=1.4  --logScaleY --fakeRate"],
-			   ['AntiEle_pileup_fake',"DecayModeFindingNewDMsEffpileup /MVA6*ElectronRejectionEffpileup  --rebin=10  --maxXaxis=80   --maxLogY=1.4  --logScaleY --fakeRate"]],
+			   ['AntiEle_pileup_fake',"DecayModeFindingNewDMsEffpileup /MVA6*ElectronRejectionEffpileup  --rebin=10   --maxLogY=1.4  --logScaleY --fakeRate"]],
 
-                ########### ZMM old
-		'ZMM':[['AntiMu_pt_fake',"DecayModeFindingNewDMsEffpt /*MuonRejection3Effpt  --rebin=10  --maxXaxis=200   --maxLogY=1.4  --logScaleY --fakeRate"],
+        #         ########### ZMM old
+		'ZMM':[
+		['AntiMu_pt_fake',"DecayModeFindingNewDMsEffpt /*MuonRejection3Effpt  --rebin=10  --maxXaxis=200   --maxLogY=1.4  --logScaleY --fakeRate"],
 			   ['AntiMu_eta_fake',"DecayModeFindingNewDMsEffeta /*MuonRejection3Effeta  --rebin=10  --maxLogY=1.4  --logScaleY --fakeRate"],
 			   ['AntiMu_phi_fake',"DecayModeFindingNewDMsEffphi /*MuonRejection3Effphi  --rebin=10  --maxXaxis=200 --minXaxis=-200  --maxLogY=1.4  --logScaleY --fakeRate"],
-			   ['AntiMu_pileup_fake',"DecayModeFindingNewDMsEffpileup /*MuonRejection3Effpileup  --rebin=10  --maxXaxis=80   --maxLogY=1.4  --logScaleY --fakeRate"]]
+			   ['AntiMu_pileup_fake',"DecayModeFindingNewDMsEffpileup /*MuonRejection3Effpileup  --rebin=10   --maxLogY=1.4  --logScaleY --fakeRate"]]
  	}
 
                 ########### new for all samples
@@ -101,7 +107,7 @@ def main():
 		if evtt not in ['TTbar', 'ZEE']: parameters.append(['DeepTauVSmu',"tau_byDeepTau2017v2p1VSmuraw  --rebin=10  --normalize  --maxXaxis=200   --maxLogY=1.4  --logScaleY --events"])
 		if evtt not in ['ZMM', 'TTbar']: parameters.append(['DeepTauVSe',"tau_byDeepTau2017v2p1VSeraw  --rebin=10  --normalize  --maxXaxis=200   --maxLogY=1.4  --logScaleY --events"])
 
-	target = args.paths[0][args.paths[0].rfind("CMSSW"):].rstrip(".root")
+	target =    args.paths[0][args.paths[0].rfind("CMSSW"):].rstrip(".root")
 	reference = args.paths[1][args.paths[1].rfind("CMSSW"):].rstrip(".root")
 
 	out_folder = target + '_vs_' + reference
@@ -132,22 +138,30 @@ def main():
 					if "UP18" in args.paths[0]: TEV = "13_UP18"
 					if "14TeV__CMSSW" in args.paths[0]: 
 						TEV = "14TeV"
+						if (evtt=="ZMM" or evtt=="ZEE" ) :
+							TEV = "14"
+					if "14__CMSSW" in args.paths[0]: TEV = "14"
+
 					if "14__CMSSW" in args.paths[0]: 
 						TEV = "14"
 						if evtt=="TTbar" :
 							TEV="14TeV"
-					if evtt == "TenTau": TEV = "15_500"
-
-					thistarget = os.path.join(os.path.dirname(args.paths[0]), "DQM_V000{numi}_R000000001__RelVal{evtt}_{tev}__{target}.root".format(numi=numi, evtt=evtt, tev=TEV, target=target))
-					thisreference = os.path.join(os.path.dirname(args.paths[1]), "DQM_V000{numj}_R000000001__RelVal{evtt}_{tev}__{reference}.root".format(numj=numj, evtt=evtt, tev=TEV, reference=reference))
+					if evtt == "TenTau": 
+						if "mcRun4" in target : # phase 2 naming convention
+							TEV = "15_500_Eta3p1"
+						else : #Run3 naming convention
+							TEV = "15_500"
 					
+					
+					thistarget = os.path.join(os.path.dirname(args.paths[0]), "DQM_V000{numi}_R000000001__RelVal{evtt}_{tev}__{target}.root".format(numi=numi, evtt=evtt, tev=TEV, target=target))
+					thisreference = os.path.join(os.path.dirname(args.paths[1]), "DQM_V000{numj}_R000000001__RelVal{evtt}_{tev}__{reference}.root".format(numj=numj, evtt=evtt, tev=TEV, reference=reference))	
 					command = "python $CMSSW_BASE/src/Validation/RecoTau/Tools/MultipleCompare.py -T {target} -R {reference} -t {tfolder} -r {rfolder} {param2} -o {output}".format(
 							target=thistarget,
 							reference=thisreference,
 							tfolder=target,
 							rfolder=reference,
 							param2=params[1],
-							output=os.path.join(out_folder, "{evtt}_13__{target}_{param1}.png".format(evtt=evtt, target=target, param1=params[0]))
+							output=os.path.join(out_folder, "{evtt}_{TEV}__{target}_{param1}.png".format(evtt=evtt, target=target, param1=params[0], TEV=TEV))
 					)
 					commands.append(command)
 	
