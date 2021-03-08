@@ -523,7 +523,7 @@ def main(argv=None):
         refH.Sumw2()
         if entries > 0:
           refH.Scale(1./entries)
-    refH.Draw('same hist')
+    # refH.Draw('same hist') # do not need to draw again
     divHistos.append(Divide(testH,refH))
 
     #if options.maxLogY > 0:
