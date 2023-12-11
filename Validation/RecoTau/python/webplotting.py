@@ -70,4 +70,4 @@ def webplotting(input_dir, **kwargs):
 				description=html_desciption,
 				plots=html_plots
 		))
-		print "Created", html_index_filename
+		print ("Created", html_index_filename)

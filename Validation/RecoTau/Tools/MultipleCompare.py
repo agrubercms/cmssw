@@ -128,13 +128,13 @@ def DetermineHistType(name):
   return [type, label, prefix]
 
 def DrawTitle(text,num):
-	title = TLatex()
-	title.SetNDC()
-	title.SetTextAlign(12)#3*10=right,3*1=top
-	title.SetTextSize(.030)	
-	leftMargin = gStyle.GetPadLeftMargin()
-	topMargin = 1 - 0.5*gStyle.GetPadTopMargin()
-	title.DrawLatex(leftMargin, topMargin+num*0.03, text)
+        title = TLatex()
+        title.SetNDC()
+        title.SetTextAlign(12)#3*10=right,3*1=top
+        title.SetTextSize(.030) 
+        leftMargin = gStyle.GetPadLeftMargin()
+        topMargin = 1 - 0.5*gStyle.GetPadTopMargin()
+        title.DrawLatex(leftMargin, topMargin+num*0.03, text)
 
 def DrawBranding(options, label=''):
   if options.branding != None or label != '':
@@ -385,14 +385,14 @@ def main(argv=None):
 
   #legend = TLegend(0.50,0.73,0.50+0.37,1)
   x1 = 1-gStyle.GetPadRightMargin()
-  x2 = 1-gStyle.GetPadRightMargin()+0.25
+  x2 = gStyle.GetPadRightMargin()+0.45
   y2 = 1-gStyle.GetPadTopMargin()
   lineHeight = .055
   if len(histoList) == 1:
     lineHeight = .05
   y1 = y2 - lineHeight*len(histoList)
   legend = TLegend(x1,y1,x2,y2)
-  legend.SetHeader(label)
+  legend.SetHeader("")
   legend.SetFillColor(0)
   legend.SetTextSize(0.032)
   if drawStats:
@@ -410,7 +410,7 @@ def main(argv=None):
   effPad.SetBottomMargin(0.0)#0.1)
   #effPad.SetTopMargin(0.1)
   #effPad.SetLeftMargin(0.13)
-  #effPad.SetRightMargin(0.07)
+  #effPad.SetRightMargin(0.05)
   effPad.Draw()
   #header = ''
   #if options.sampleLabel != None:
@@ -540,7 +540,7 @@ def main(argv=None):
   if refFile != None:
     for histo,color in zip(divHistos,colors):
       if firstD==0:
-	shiftD = 0.001*histo.GetBinWidth(1)*histo.GetXaxis().GetNbins() if options.maxXaxis==800 else 0.001*(options.maxXaxis-options.minXaxis)
+        shiftD = 0.001*histo.GetBinWidth(1)*histo.GetXaxis().GetNbins() if options.maxXaxis==800 else 0.001*(options.maxXaxis-options.minXaxis)
       diffPad.cd()
       histo.SetMarkerSize(0.75)
       histo.SetMarkerStyle(20)

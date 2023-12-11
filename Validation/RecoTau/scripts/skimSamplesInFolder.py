@@ -53,7 +53,7 @@ def main():
 		if "TTbar" in input_file or "QCD" in input_file:
 			postfix = "QCD"
 
-		commands.append("python " + args.config + " " + input_file + " " + output_file + " " + postfix)
+		commands.append("python3 " + args.config + " " + input_file + " " + output_file + " " + postfix)
 	
 	tools.parallelize(tools.call_command, commands, n_processes=args.n_processes)
 

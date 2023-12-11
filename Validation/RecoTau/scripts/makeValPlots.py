@@ -99,7 +99,7 @@ def main():
  	}
 
                 ########### new for all samples
-	for evtt, parameters in parameterset.iteritems():
+	for evtt, parameters in parameterset.items():
 		parameters.append(['pT',"tau_pt  --rebin=2  --normalize  --maxXaxis=200   --maxLogY=1.4  --logScaleY --events"])
 		parameters.append(['eta',"tau_eta  --rebin=10  --normalize  --maxLogY=1.4  --logScaleY --events"])
 		parameters.append(['phi',"tau_phi  --rebin=10  --normalize  --maxXaxis=200   --maxLogY=1.4  --logScaleY --events"])
@@ -128,9 +128,9 @@ def main():
 	#		break
 	#	if pattern_ref == None: continue
 
-	for numi in xrange(1,2,1):#xrange(1,ver.nr.+1,1) #For target
+	for numi in range(1,2,1):#range(1,ver.nr.+1,1) #For target
 		for numj in range(1,2,1):#For reference
-			for evtt, parameters in parameterset.iteritems():
+			for evtt, parameters in parameterset.items():
 				
 				
 				for params in parameters:
@@ -155,7 +155,7 @@ def main():
 					
 					thistarget = os.path.join(os.path.dirname(args.paths[0]), "DQM_V000{numi}_R000000001__RelVal{evtt}_{tev}__{target}.root".format(numi=numi, evtt=evtt, tev=TEV, target=target))
 					thisreference = os.path.join(os.path.dirname(args.paths[1]), "DQM_V000{numj}_R000000001__RelVal{evtt}_{tev}__{reference}.root".format(numj=numj, evtt=evtt, tev=TEV, reference=reference))	
-					command = "python $CMSSW_BASE/src/Validation/RecoTau/Tools/MultipleCompare.py -T {target} -R {reference} -t {tfolder} -r {rfolder} {param2} -o {output}".format(
+					command = "python3 $CMSSW_BASE/src/Validation/RecoTau/Tools/MultipleCompare.py -T {target} -R {reference} -t {tfolder} -r {rfolder} {param2} -o {output}".format(
 							target=thistarget,
 							reference=thisreference,
 							tfolder=target,
