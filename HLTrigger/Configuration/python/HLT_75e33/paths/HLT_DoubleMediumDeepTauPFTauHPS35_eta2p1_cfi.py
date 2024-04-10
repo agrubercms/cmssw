@@ -7,19 +7,18 @@ from ..sequences.HLTParticleFlowSequence_cfi import *
 from ..sequences.HLTAK4PFJetsReconstruction_cfi import *
 from ..sequences.HLTPFTauHPS_cfi import *
 from ..modules.hltAK4PFJetsForTaus_cfi import *
-from ..sequences.HLTHPSDeepTauPFTauSequence_cfi import *
-from ..modules.hltHpsSelectedPFTausMediumDitauWPDeepTau_cfi import *
-from ..modules.hltHpsDoublePFTau35MediumDitauWPDeepTau_cfi import *
+from ..sequences.HLTHPSMediumChargedIsoPFTauSequence_cfi import *
+from ..modules.hltHpsSelectedPFTausTrackPt1MediumChargedIsolation_cfi import *
+from ..modules.hltHpsDoublePFTau40TrackPt1MediumChargedIsolation_cfi import *
 
 HLT_DoubleMediumDeepTauPFTauHPS35_eta2p1 = cms.Path(
-    HLTBeginSequence + 
     hltPreDoublePFTauHPS +
     HLTParticleFlowSequence +
     HLTAK4PFJetsReconstruction +
     hltAK4PFJetsForTaus +
     HLTPFTauHPS +
-    HLTHPSDeepTauPFTauSequence +
-    hltHpsSelectedPFTausMediumDitauWPDeepTau +
-    hltHpsDoublePFTau35MediumDitauWPDeepTau +
+    HLTHPSMediumChargedIsoPFTauSequence +
+    hltHpsSelectedPFTausTrackPt1MediumChargedIsolation +
+    hltHpsDoublePFTau40TrackPt1MediumChargedIsolation +
     HLTEndSequence
 )
