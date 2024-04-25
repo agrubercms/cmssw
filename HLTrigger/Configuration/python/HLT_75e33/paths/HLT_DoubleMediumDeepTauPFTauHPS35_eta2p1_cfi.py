@@ -10,8 +10,11 @@ from ..modules.hltAK4PFJetsForTaus_cfi import *
 from ..sequences.HLTHPSMediumChargedIsoPFTauSequence_cfi import *
 from ..modules.hltHpsSelectedPFTausTrackPt1MediumChargedIsolation_cfi import *
 from ..modules.hltHpsDoublePFTau40TrackPt1MediumChargedIsolation_cfi import *
+from ..modules.hltL1SeedForDoublePuppiTau_cfi import *
+
 
 HLT_DoubleMediumDeepTauPFTauHPS35_eta2p1 = cms.Path(
+    hltL1SeedForDoublePuppiTau +
     hltPreDoublePFTauHPS +
     HLTParticleFlowSequence +
     HLTAK4PFJetsReconstruction +
