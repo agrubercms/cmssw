@@ -30,6 +30,7 @@
 #include "DataFormats/TauReco/interface/PFTauFwd.h"
 #include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
+#include "DataFormats/L1Trigger/interface/P2GTCandidate.h"
 
 #include "DataFormats/HLTReco/interface/TriggerTypeDefs.h"
 
@@ -60,6 +61,9 @@ typedef HLTSinglet<MET> HLT1MET;
 typedef HLTSinglet<PFTau> HLT1PFTau;
 typedef HLTSinglet<PFJet> HLT1PFJet;
 typedef HLTSinglet<PFMET> HLT1PFMET;
+
+typedef HLTSinglet<l1t::P2GTCandidate> L1P2GTCandidate;
+
 
 // filters for L1 candidates
 typedef HLTSinglet<l1extra::L1EmParticle>
@@ -196,6 +200,7 @@ DEFINE_FWK_MODULE(L1THPSPFTauFilter);
 DEFINE_FWK_MODULE(L1TJetFilter);
 DEFINE_FWK_MODULE(L1TPFJetFilter);
 DEFINE_FWK_MODULE(L1TEnergySumFilter);
+DEFINE_FWK_MODULE(L1P2GTCandidate);
 
 DEFINE_FWK_MODULE(HLTGlobalSumsPFMET);
 DEFINE_FWK_MODULE(HLTGlobalSumsCaloMET);
