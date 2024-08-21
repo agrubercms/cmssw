@@ -94,7 +94,9 @@ namespace trigger {
     TriggerMETSig = +93,
     TriggerELongit = +94,
     TriggerMHTSig = +95,
-    TriggerHLongit = +96
+    TriggerHLongit = +96,
+
+    TriggerL1P2GTCandidate = +97
 
   };
 
