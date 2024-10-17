@@ -228,22 +228,30 @@ DoubleIsoTkPho2212 = l1tGTDoubleObjectCond.clone(
 pDoubleIsoTkPho22_12 = cms.Path(DoubleIsoTkPho2212)
 algorithms.append(cms.PSet(expression = cms.string("pDoubleIsoTkPho22_12")))
 
+from L1Trigger.Phase2L1GT.menuConstants import *
+
 DoublePuppiTau5252 = l1tGTDoubleObjectCond.clone(
     collection1 = cms.PSet(
         tag = cms.InputTag("l1tGTProducer", "CL2Taus"),
         minEta = cms.double(-2.172),
         maxEta = cms.double(2.172),
         regionsAbsEtaLowerBounds=cms.vdouble(0,1.5),
-        regionsMinPt=cms.vdouble(39,35),
-        minQualityScore = cms.uint32(225),
+        regionsMinPt=cms.vdouble(
+            off_to_on_thr(52, "L1nnPuppiTau","default","barrel"),
+            off_to_on_thr(52, "L1nnPuppiTau","default","endcap")
+            ),
+        minQualityScore = cms.uint32(objectIDs["L1nnPuppiTau"]["default"]),
     ),
     collection2 = cms.PSet(
         tag = cms.InputTag("l1tGTProducer", "CL2Taus"),
         minEta = cms.double(-2.172),
         maxEta = cms.double(2.172),
         regionsAbsEtaLowerBounds=cms.vdouble(0,1.5),
-        regionsMinPt=cms.vdouble(39,35),
-        minQualityScore = cms.uint32(225),
+        regionsMinPt=cms.vdouble(
+            off_to_on_thr(52, "L1nnPuppiTau","default","barrel"),
+            off_to_on_thr(52, "L1nnPuppiTau","default","endcap")
+            ),
+        minQualityScore = cms.uint32(objectIDs["L1nnPuppiTau"]["default"]),
     ),
     minDR = cms.double(0.5),
 )
