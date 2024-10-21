@@ -132,8 +132,6 @@ private:
           extractMomenta<std::vector<reco::PFTauRef>>(seeds, seedType, seed_p4s);
         } else if (seedType == trigger::TriggerJet) {
           extractMomenta<std::vector<reco::PFJetRef>>(seeds, seedType, seed_p4s);
-        } else if (seedType == trigger::TriggerL1P2GTCandidate) {
-          extractMomenta<l1t::P2GTCandidateVectorRef>(seeds, seedType, seed_p4s);
         } else
           throw cms::Exception("Invalid seed type", "TauTagFilter::extractMomenta")
               << "Unsupported seed type: " << seedType;
