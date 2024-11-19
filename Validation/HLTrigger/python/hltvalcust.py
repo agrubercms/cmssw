@@ -285,7 +285,9 @@ def add_hlt_validation_phaseII(process,hltProcessName=None,sampleLabel=""):
     )
     process.HLTGenValSourceTAU.hltPathsToCheck = cms.vstring(
         "HLT_DoubleMediumChargedIsoPFTauHPS40_eta2p1",
-        "HLT_DoubleMediumDeepTauPFTauHPS35_eta2p1"
+        "HLT_DoubleMediumDeepTauPFTauHPS35_eta2p1",
+        "HLT_SingleMediumChargedIsoPFTauHPS40_eta2p1_NoL1",
+        "HLT_SingleMediumDeepTauPFTauHPS35_eta2p1_NoL1"
     )
     process.HLTGenValSourceHT.hltPathsToCheck = cms.vstring(
         "HLT_PFPuppiHT1070"

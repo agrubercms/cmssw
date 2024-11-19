@@ -236,8 +236,6 @@ DoubleIsoTkPho2212 = l1tGTDoubleObjectCond.clone(
 pDoubleIsoTkPho22_12 = cms.Path(DoubleIsoTkPho2212)
 algorithms.append(cms.PSet(expression = cms.string("pDoubleIsoTkPho22_12")))
 
-from L1Trigger.Phase2L1GT.menuConstants import *
-
 DoublePuppiTau5252 = l1tGTDoubleObjectCond.clone(
     collection1 = cms.PSet(
         tag = cms.InputTag("l1tGTProducer", "CL2Taus"),
@@ -259,4 +257,15 @@ DoublePuppiTau5252 = l1tGTDoubleObjectCond.clone(
 )
 pDoublePuppiTau52_52 = cms.Path(DoublePuppiTau5252)
 algorithms.append(cms.PSet(expression = cms.string("pDoublePuppiTau52_52")))
+
+SinglePuppiTau52 = l1tGTSingleObjectCond.clone(
+        tag = cms.InputTag("l1tGTProducer", "CL2Taus"),
+        minEta = cms.double(-2.172),
+        maxEta = cms.double(2.172),
+        regionsAbsEtaLowerBounds=cms.vdouble(0,1.5),
+        regionsMinPt = getObjectThrs(52, "L1nnPuppiTau","default"),
+        minQualityScore = getObjectIDs("L1nnPuppiTau","default")
+)
+pSinglePuppiTau52 = cms.Path(SinglePuppiTau52) 
+algorithms.append(cms.PSet(expression = cms.string("pSinglePuppiTau52")))
 

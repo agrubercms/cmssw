@@ -348,6 +348,12 @@ fragment.load("HLTrigger/Configuration/HLT_75e33/services/FastTimerService_cfi")
 fragment.load("HLTrigger/Configuration/HLT_75e33/services/MessageLogger_cfi")
 fragment.load("HLTrigger/Configuration/HLT_75e33/services/ThroughputService_cfi")
 
+fragment.load("HLTrigger/Configuration/HLT_75e33/paths/L1P2GT_SingleNNTau52_cfi")
+fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_SingleMediumDeepTauPFTauHPS35_eta2p1_cfi")
+fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_SingleMediumDeepTauPFTauHPS35_eta2p1_NoL1_cfi")
+fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_SingleMediumChargedIsoPFTauHPS40_eta2p1_cfi")
+fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_SingleMediumChargedIsoPFTauHPS40_eta2p1_NoL1_cfi")
+
 fragment.schedule = cms.Schedule(*[
 
     fragment.L1T_SinglePFPuppiJet230off,
@@ -405,11 +411,17 @@ fragment.schedule = cms.Schedule(*[
     fragment.HLT_DoubleMediumChargedIsoPFTauHPS40_eta2p1,
     fragment.HLT_DoubleMediumDeepTauPFTauHPS35_eta2p1,
     fragment.L1P2GT_DoubleNNTau52,
+    fragment.L1P2GT_SingleNNTau52,
     fragment.HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1,
 
     ### Removed temporarily until final decision on L1T tau Phase-2
     #fragment.L1T_DoubleNNTau52,
     #fragment.L1T_SingleNNTau150,
+
+    fragment.HLT_SingleMediumDeepTauPFTauHPS35_eta2p1,
+    fragment.HLT_SingleMediumDeepTauPFTauHPS35_eta2p1_NoL1,
+    fragment.HLT_SingleMediumChargedIsoPFTauHPS40_eta2p1,
+    fragment.HLT_SingleMediumChargedIsoPFTauHPS40_eta2p1_NoL1,
 
     fragment.MC_JME,
     fragment.MC_BTV,
