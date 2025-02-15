@@ -40,30 +40,4 @@ namespace btagbtvdeep {
     sv_features.enratio = sv.energy() / jet.energy();
   }
 
-  // New overload for hltVtxFeatures.
-  void svToFeatures(const reco::VertexCompositePtrCandidate& sv,
-                    const reco::Vertex& pv,
-                    const reco::Jet& jet,
-                    hltVtxFeatures& sv_features,
-                    const bool flip) {
-    SecondaryVertexFeatures temp;
-    svToFeatures(sv, pv, jet, temp, flip);
-    // Map fields from temp to hltVtxFeatures (using the hlt names)
-    sv_features.jet_sv_ntrack    = temp.ntracks;
-    sv_features.jet_sv_mass      = temp.mass;
-    sv_features.jet_sv_energy_log= (temp.e > 0 ? std::log(temp.e) : 0);
-    // For deta/dphi, you may decide how to copy or recompute them.
-    sv_features.jet_sv_deta      = temp.eta - jet.eta();
-    sv_features.jet_sv_dphi      = std::fabs(reco::deltaPhi(temp.phi, jet.phi()));
-    sv_features.jet_sv_chi2      = temp.chi2;
-    sv_features.jet_sv_dxy       = temp.dxy;
-    sv_features.jet_sv_dxysig    = temp.dxysig;
-    sv_features.jet_sv_d3d       = temp.d3d;
-    sv_features.jet_sv_d3dsig    = temp.d3dsig;
-    sv_features.jet_sv_pt        = temp.pt;
-    sv_features.jet_sv_eta       = temp.eta;
-    sv_features.jet_sv_phi       = temp.phi;
-    sv_features.jet_sv_energy    = temp.e;
-  }
-
 }  // namespace btagbtvdeep

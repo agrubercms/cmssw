@@ -8,7 +8,6 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "DataFormats/JetReco/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
-#include "DataFormats/BTauReco/interface/hltParticleTransformerAK4Features.h" 
 
 namespace btagbtvdeep {
 
@@ -27,23 +26,6 @@ namespace btagbtvdeep {
                                const float jetR,
                                const float puppiw,
                                NeutralCandidateFeatures& n_pf_features);
-
-  // Add wrapper function declarations
-  void convertNeutralCandidateToFeatures(const pat::PackedCandidate* n_pf,
-                                        const pat::Jet& jet,
-                                        bool isWeightedJet,
-                                        float drminpfcandsv,
-                                        float jetR,
-                                        float puppiw,
-                                        hltNpfCandidateFeatures& n_pf_features);
-
-  void convertNeutralCandidateToFeatures(const reco::PFCandidate* n_pf,
-                                        const reco::Jet& jet,
-                                        bool isWeightedJet,
-                                        float drminpfcandsv,
-                                        float jetR,
-                                        float puppiw,
-                                        hltNpfCandidateFeatures& n_pf_features);
 
   template <typename CandidateType>
   static void commonCandidateToFeatures(const CandidateType* n_pf,

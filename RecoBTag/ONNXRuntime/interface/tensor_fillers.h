@@ -5,7 +5,6 @@
 #include "DataFormats/BTauReco/interface/ParticleTransformerAK4Features.h"
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
 #include "RecoBTag/ONNXRuntime/interface/tensor_configs.h"
-#include "DataFormats/BTauReco/interface/hltParticleTransformerAK4Features.h"
 
 namespace btagbtvdeep {
 
@@ -23,6 +22,14 @@ namespace btagbtvdeep {
 
   void neighbourTrack_tensor_filler(float*& ptr, const btagbtvdeep::TrackPairFeatures& neighbourTrack_features);
 
+  std::vector<float> inputs_parT(const btagbtvdeep::ChargedCandidateFeatures& c_pf_features,
+                                 parT::InputFeatures ifeature);
+
+  std::vector<float> inputs_parT(const btagbtvdeep::NeutralCandidateFeatures& n_pf_features,
+                                 parT::InputFeatures ifeature);
+
+  std::vector<float> inputs_parT(const btagbtvdeep::SecondaryVertexFeatures& sv_features, parT::InputFeatures ifeature);
+
   template <class parT_features>
   void parT_tensor_filler(cms::Ort::FloatArrays& data,
                           const parT::InputFeatures ifeature,
@@ -35,14 +42,14 @@ namespace btagbtvdeep {
       const auto& f = features.at(n);
       ptr = &data[ifeature][offset + n * parT::N_InputFeatures.at(ifeature)];
       start = ptr;
-      //const std::vector<float>& inputs = inputs_parT(f, ifeature);
-      //for (unsigned int i = 0; i < inputs.size(); i++) {
-      //  *ptr = inputs[i];
-      //  ++ptr;
-      //}
-      //if (inputs.size() > 0)
-      //  --ptr;
-      //assert(start + parT::N_InputFeatures.at(ifeature) - 1 == ptr);
+      const std::vector<float>& inputs = inputs_parT(f, ifeature);
+      for (unsigned int i = 0; i < inputs.size(); i++) {
+        *ptr = inputs[i];
+        ++ptr;
+      }
+      if (inputs.size() > 0)
+        --ptr;
+      assert(start + parT::N_InputFeatures.at(ifeature) - 1 == ptr);
     }
   }
 
@@ -54,28 +61,12 @@ namespace btagbtvdeep {
     unsigned int n =
         std::clamp((unsigned int)features.size(), (unsigned int)0, (unsigned int)parT::N_AcceptedFeatures.at(ifeature));
     for (unsigned int count = 0; count < n; count++) {
-      //const std::vector<float>& inputs = inputs_parT(features.at(count), ifeature);
-      //vdata.insert(vdata.end(), inputs.begin(), inputs.end());
+      const std::vector<float>& inputs = inputs_parT(features.at(count), ifeature);
+      vdata.insert(vdata.end(), inputs.begin(), inputs.end());
     }
     unsigned int n_features = parT::N_InputFeatures.at(ifeature);
     if (n < target_n)
       vdata.insert(vdata.end(), (target_n - n) * n_features, 0);  // Add 0 to unfilled part as padding value
-  }
-
-  // Overload for candidate vectors (standard std::vector<float> elements).
-  template <>
-  inline void parT_tensor_filler<std::vector<float>>(std::vector<float>& vdata,
-                                                     const parT::InputFeatures ifeature,
-                                                     const std::vector<std::vector<float>>& features,
-                                                     const unsigned int target_n) {
-    unsigned int n = std::clamp((unsigned int)features.size(), 0u, parT::N_AcceptedFeatures.at(ifeature));
-    for (unsigned int count = 0; count < n; count++) {
-      //const std::vector<float>& inputs = inputs_parT(features.at(count), ifeature);
-      //vdata.insert(vdata.end(), inputs.begin(), inputs.end());
-    }
-    unsigned int n_features = parT::N_InputFeatures.at(ifeature);
-    if (n < target_n)
-      vdata.insert(vdata.end(), (target_n - n) * n_features, 0);  // pad with 0
   }
 
 }  // namespace btagbtvdeep
