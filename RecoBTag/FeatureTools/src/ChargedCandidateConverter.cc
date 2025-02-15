@@ -99,4 +99,43 @@ namespace btagbtvdeep {
     // c_pf_features.dzsig =
   }
 
+  void hltPackedCandidateToFeatures(const pat::PackedCandidate* c_pf,
+                                    const pat::Jet& jet,
+                                    const TrackInfoBuilder& track_info,
+                                    const bool isWeightedJet,
+                                    const float drminpfcandsv,
+                                    const float jetR,
+                                    const float puppiw,
+                                    hltCpfCandidateFeatures& c_pf_features,
+                                    const bool flip,
+                                    const float distminpfcandsv) {
+    // reinterpret_cast the HLT object to its base type beforehand.
+    auto& base_features = reinterpret_cast<ChargedCandidateFeatures&>(c_pf_features);
+    commonCandidateToFeatures(c_pf, jet, track_info, isWeightedJet, drminpfcandsv, jetR, puppiw, base_features, flip, distminpfcandsv);
+
+    c_pf_features.Cpfcan_VTX_ass = c_pf->pvAssociationQuality();  // renamed from vtx_ass
+    c_pf_features.Cpfcan_puppiw = puppiw;  // renamed from puppiw
+    // Removed assignment of charge, CaloFrac, HadFrac, lostInnerHits, numberOfPixelHits, numberOfStripHits
+  }
+
+  void hltRecoCandidateToFeatures(const reco::PFCandidate* c_pf,
+                                  const reco::Jet& jet,
+                                  const TrackInfoBuilder& track_info,
+                                  const bool isWeightedJet,
+                                  const float drminpfcandsv,
+                                  const float jetR,
+                                  const float puppiw,
+                                  const int pv_ass_quality,
+                                  const reco::VertexRef& pv,
+                                  hltCpfCandidateFeatures& c_pf_features,
+                                  const bool flip,
+                                  const float distminpfcandsv) {
+    auto& base_features = reinterpret_cast<ChargedCandidateFeatures&>(c_pf_features);
+    commonCandidateToFeatures(c_pf, jet, track_info, isWeightedJet, drminpfcandsv, jetR, puppiw, base_features, flip, distminpfcandsv);
+
+    c_pf_features.Cpfcan_VTX_ass = vtx_ass_from_pfcand(*c_pf, pv_ass_quality, pv);  // renamed from vtx_ass
+    c_pf_features.Cpfcan_puppiw = puppiw;  // renamed from puppiw
+    // Removed assignment of charge, CaloFrac, HadFrac, and other track details already handled in baseline conversion
+  }
+
 }  // namespace btagbtvdeep

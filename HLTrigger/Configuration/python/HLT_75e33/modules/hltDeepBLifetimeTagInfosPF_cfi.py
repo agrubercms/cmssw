@@ -15,6 +15,6 @@ hltDeepBLifetimeTagInfosPF = cms.EDProducer( "CandIPProducer",
     jetDirectionUsingGhostTrack = cms.bool( False ),
     useTrackQuality = cms.bool( False ),
     jets = cms.InputTag( "hltPFJetForBtag" ),
-    candidates = cms.InputTag("particleFlowTmp" ),
+    candidates = cms.InputTag("hltParticleFlowTmp" ),
     maxDeltaR = cms.double( 0.4 )
 )
