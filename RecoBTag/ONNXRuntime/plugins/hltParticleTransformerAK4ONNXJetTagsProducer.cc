@@ -127,11 +127,14 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
 
         // Restore proper feature geometry per candidate group:
         input_shapes_ = {
-            {(int64_t)1, (int64_t)1, (int64_t)global_size},              // global features
-            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},         // charged PF candidates
-            {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},         // neutral PF candidates
-            {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}           // SV candidates
+            {(int64_t)1, (int64_t)global_size},              // global features: shape [1,14]
+            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},         // cpf features: shape [1,26,20]
+            {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},         // npf features: shape [1,25,10]
+            {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}           // vtx features: shape [1,5,14]
         };
+
+        // Run the ONNX inference using the global cache
+        outputs = globalCache()->run(input_names_, data_, input_shapes_, output_names_, 1)[0];
         assert(outputs.size() == flav_names_.size());
       }
 

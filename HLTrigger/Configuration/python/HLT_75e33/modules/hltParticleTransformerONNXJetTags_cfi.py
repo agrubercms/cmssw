@@ -13,9 +13,9 @@ hltParticleTransformerONNXJetTags = cms.EDProducer( "hltParticleTransformerAK4ON
     ),
     input_names = cms.vstring(
         "global_features",
-        "cpf_features",
-        "npf_features",
-        "vtx_features"
+        "cpf",         # Changed from "cpf_features" to "cpf"
+        "npf",
+        "vtx"
     ),
     output_names = cms.vstring("output"),
     mightGet = cms.optional.untracked.vstring,
