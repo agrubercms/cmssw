@@ -156,6 +156,13 @@ void BTagProbabilityToDiscriminator::produce(edm::Event &iEvent, const edm::Even
       //protect against 0 denominator and undefined jet values (numerator probability < 0)
       float new_value = (denominator != 0 && numerator >= 0) ? numerator / denominator : -10.;
       (*output_tags[disc_idx])[key] = new_value;
+      
+      // Print out the probabilities using std::cout
+      /*std::cout << "Discriminator: " << discrims_[disc_idx].name
+                << ", Jet #" << idx
+                << " - Numerator: " << numerator
+                << ", Denominator: " << denominator
+                << ", Value: " << new_value << std::endl;*/
     }
   }
 

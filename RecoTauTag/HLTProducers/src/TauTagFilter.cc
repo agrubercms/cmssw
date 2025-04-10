@@ -16,6 +16,7 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "HLTrigger/HLTcore/interface/HLTFilter.h"
 #include "RecoTauTag/RecoTau/interface/TauWPThreshold.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h" // new include for gen particles
 
 class TauTagFilter : public HLTFilter {
 public:
@@ -39,7 +40,9 @@ public:
         maxEta_(cfg.getParameter<double>("maxEta")),
         usePtCorr_(cfg.getParameter<bool>("usePtCorr")),
         matchWithSeeds_(cfg.getParameter<bool>("matchWithSeeds") && cfg.getParameter<double>("matchingdR") >= 0),
-        matchingdR2_(std::pow(cfg.getParameter<double>("matchingdR"), 2)) {
+        matchingdR2_(std::pow(cfg.getParameter<double>("matchingdR"), 2)),
+        genTausToken_(consumes<reco::GenParticleCollection>(cfg.getParameter<edm::InputTag>("genTaus"))) // new token
+  {
     if (cfg.getParameter<bool>("matchWithSeeds") && cfg.getParameter<double>("matchingdR") < 0)
       edm::LogWarning("TauTagFilter") << "Matching with seeds is disabled because matchingdR < 0";
 
@@ -64,6 +67,7 @@ public:
     desc.add<bool>("usePtCorr", false)->setComment("use multiplicative tau pt corrections");
     desc.add<bool>("matchWithSeeds", false)->setComment("apply match with seeds");
     desc.add<double>("matchingdR", 0.5)->setComment("deltaR for matching with seeds");
+    desc.add<edm::InputTag>("genTaus", edm::InputTag("genParticles"))->setComment("input collection of gen particle taus"); // new parameter
     descriptions.addWithDefaultLabel(desc);
   }
 
@@ -77,6 +81,9 @@ public:
 
     const auto tausHandle = event.getHandle(tausToken_);
     const auto& taus = *tausHandle;
+
+    // Retrieve gen taus
+    auto genTausHandle = event.getHandle(genTausToken_); // new handle
 
     const std::vector<LorentzVectorM> seed_p4s = extractMomenta(&event);
     auto hasMatch = [&](const LorentzVectorM& p4) {
@@ -109,6 +116,29 @@ public:
         if (tag > tag_thr) {
           filterproduct.addObject(trigger::TriggerTau, TauRef(tausHandle, tau_idx));
           nTauPassed++;
+          std::cout << "Tau index " << tau_idx 
+                    << ": discriminator score = " << tag 
+                    << ", threshold = " << tag_thr <<
+                    ": passed selection" << std::endl;
+          // New code to match with gen taus if available
+          if (!genTausHandle.isValid()) {
+            edm::LogWarning("TauTagFilter")
+                << "Gen tau collection not valid. Please check your config (e.g. set genTaus to 'genParticles').";
+          } else {
+            bool genMatched = false;
+            for (const auto& genTau : *genTausHandle) {
+              if (std::abs(genTau.pdgId()) != 15) continue; // only consider gen taus
+              if (reco::deltaR2(tau.polarP4(), genTau.p4()) < matchingdR2_) {
+                std::cout << "Tau index " << tau_idx << ": matched gen tau with pt = " 
+                          << genTau.pt() << ", eta = " << genTau.eta()
+                          << ", tagger score = " << tag << std::endl;
+                genMatched = true;
+                break;
+              }
+            }
+            if (!genMatched)
+              std::cout << "Tau index " << tau_idx << ": no matching gen tau found" << std::endl;
+          }
         }
       }
     }
@@ -164,6 +194,7 @@ private:
   const bool usePtCorr_;
   const bool matchWithSeeds_;
   const double matchingdR2_;
+  const edm::EDGetTokenT<reco::GenParticleCollection> genTausToken_; // new member
 };
 
 //define this as a plug-in

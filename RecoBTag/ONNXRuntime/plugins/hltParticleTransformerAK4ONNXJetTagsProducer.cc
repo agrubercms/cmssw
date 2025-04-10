@@ -132,10 +132,16 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
             {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},         // npf features: shape [1,25,10]
             {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}           // vtx features: shape [1,5,14]
         };
-
-        // Run the ONNX inference using the global cache
+        
+        // Run inference - directly assign outputs using the same pattern as UnifiedParticleTransformer
         outputs = globalCache()->run(input_names_, data_, input_shapes_, output_names_, 1)[0];
+        
         assert(outputs.size() == flav_names_.size());
+        // Debug output with clearer labels
+        /*std::cout << "Jet " << jet_n << " probabilities:" << std::endl;
+        for (size_t i = 0; i < outputs.size(); ++i) {
+          std::cout << "  " << flav_names_[i] << ": " << outputs[i] << std::endl;
+        }*/
       }
 
       const auto& jet_ref = taginfo.jet();
@@ -158,10 +164,10 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
     n_features_npf_ = 10; // neutral PF: 10 features per candidate
     n_features_sv_  = 14; // SV: 14 features per candidate
 
-    // Use maximum candidate counts
-    const auto n_cpf_candidates = std::min(features.cpf_candidates.size(), (size_t)n_max_cpf_candidates_);
-    const auto n_npf_candidates = std::min(features.npf_candidates.size(), (size_t)n_max_npf_candidates_);
-    const auto n_sv_candidates  = std::min(features.vtx_features.size(),  (size_t)n_max_sv_candidates_);
+    // These variable declarations are unused, so we'll comment them out
+    // const auto n_cpf_candidates = std::min(features.cpf_candidates.size(), (size_t)n_max_cpf_candidates_);
+    // const auto n_npf_candidates = std::min(features.npf_candidates.size(), (size_t)n_max_npf_candidates_);
+    // const auto n_sv_candidates  = std::min(features.vtx_features.size(),  (size_t)n_max_sv_candidates_);
 
     std::vector<unsigned int> input_sizes = std::vector<unsigned int>{ 
         static_cast<unsigned int>(global_size),

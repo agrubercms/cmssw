@@ -87,7 +87,6 @@ namespace btagbtvdeep {
     std::vector<hltCpfCandidateFeatures> cpf_candidates;
     std::vector<hltNpfCandidateFeatures> npf_candidates;
     std::vector<hltVtxFeatures> vtx_features;
-
   };
 
 }  // namespace btagbtvdeep
