@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 hltDoublePFJets30ParTTauhTagMediumWPL2DoubleTau = cms.EDFilter( "TauTagFilter",
     saveTags = cms.bool( True ),
     nExpected = cms.int32( 2 ),
-    taus = cms.InputTag( "hltPFJetForBtag" ),
+    taus = cms.InputTag( "hltAK4PFPuppiJets" ),
     tauTags = cms.InputTag( 'hltParticleTransformerDiscriminatorsJetTags','TauvsAll' ),
     tauPtCorr = cms.InputTag( '','' ),
     seeds = cms.InputTag( "hltL1SeedForDoublePuppiTau" ),

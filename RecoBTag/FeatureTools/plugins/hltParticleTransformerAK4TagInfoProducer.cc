@@ -76,44 +76,51 @@ private:
                                          bool flip,
                                          float distminpfcandsv) {
     float constituentWeight = isWeightedJet ? puppiw : 1.0f;
-    feat.Cpfcan_ptrel = (cand->pt() * constituentWeight) / jet.pt();
-    feat.Cpfcan_drminsv = btagbtvdeep::catch_infs_and_bound(drminpfcandsv, 0, -jetR, 0, -jetR);
-    feat.Cpfcan_pt = cand->pt();
-    feat.Cpfcan_eta = cand->eta();
-    feat.Cpfcan_phi = cand->phi();
-    feat.Cpfcan_e   = cand->energy();
-    // For PFCandidate, default the association quality.
-    feat.Cpfcan_VTX_ass = 0;
-    feat.Cpfcan_puppiw  = puppiw;
-    
-    // --- Track-related features from track_info ---
-    feat.Cpfcan_BtagPf_trackEtaRel    = track_info.getTrackEtaRel();
-    feat.Cpfcan_BtagPf_trackPtRel     = track_info.getTrackPtRel();
-    feat.Cpfcan_BtagPf_trackPPar      = track_info.getTrackPPar();
-    feat.Cpfcan_BtagPf_trackDeltaR    = track_info.getTrackDeltaR();
-    feat.Cpfcan_BtagPf_trackPParRatio = track_info.getTrackPParRatio();
-    feat.Cpfcan_BtagPf_trackSip2dVal  = track_info.getTrackSip2dVal();
-    feat.Cpfcan_BtagPf_trackSip2dSig  = track_info.getTrackSip2dSig();
-    feat.Cpfcan_BtagPf_trackSip3dVal  = track_info.getTrackSip3dVal();
-    feat.Cpfcan_BtagPf_trackSip3dSig  = track_info.getTrackSip3dSig();
-    feat.Cpfcan_BtagPf_trackJetDistVal = track_info.getTrackJetDistVal();
-    
-    if (cand->trackRef().isNonnull()) { // replaced cand->hasTrackDetails()
-      const auto& track = *(cand->trackRef()); // replaced cand->pseudoTrack()
-      feat.Cpfcan_chi2 = btagbtvdeep::catch_infs_and_bound(track.normalizedChi2(), 300, -1, 300);
-      feat.Cpfcan_quality = track.qualityMask();
+    // New candidate feature mapping:
+    feat.jet_pfcand_deta = cand->eta() - jet.eta();
+    feat.jet_pfcand_dphi = reco::deltaPhi(cand->phi(), jet.phi());
+    feat.jet_pfcand_pt_log = (cand->pt() > 0) ? std::log(cand->pt()) : 0;
+    feat.jet_pfcand_energy_log = (cand->energy() > 0) ? std::log(cand->energy()) : 0;
+    feat.jet_pfcand_charge = static_cast<float>(cand->charge());
+    feat.jet_pfcand_frompv = 0; // default since no fromPV info available
+    feat.jet_pfcand_nlostinnerhits = 0; // default
+    if (cand->trackRef().isNonnull()) {
+      const auto& track = *(cand->trackRef());
+      feat.jet_pfcand_track_chi2 = btagbtvdeep::catch_infs_and_bound(track.normalizedChi2(), 300, -1, 300);
+      feat.jet_pfcand_track_qual = static_cast<float>(track.qualityMask());
     } else {
-      feat.Cpfcan_chi2 = -1;
-      feat.Cpfcan_quality = (1 << reco::TrackBase::loose);
+      feat.jet_pfcand_track_chi2 = -1;
+      feat.jet_pfcand_track_qual = 0;
     }
+    // Defaults for dz and dxy features (could be updated if available)
+    feat.jet_pfcand_dz = 0;
+    feat.jet_pfcand_dzsig = 0;
+    feat.jet_pfcand_dxy = 0;
+    feat.jet_pfcand_dxysig = 0;
+    // Use track info for relative quantities:
+    feat.jet_pfcand_etarel = track_info.getTrackEtaRel();
+    feat.jet_pfcand_pperp_ratio = track_info.getTrackPtRel();
+    feat.jet_pfcand_ppara_ratio = track_info.getTrackPParRatio();
+    // Map track-related distances (using available track info methods)
+    feat.jet_pfcand_trackjet_d3d = track_info.getTrackJetDistVal();
+    feat.jet_pfcand_trackjet_d3dsig = track_info.getTrackSip3dSig();
+    feat.jet_pfcand_trackjet_dist = track_info.getTrackJetDistVal();
+    feat.jet_pfcand_trackjet_decayL = 0; // default, update if decay length becomes available
+    // Default hit counts (if not computed elsewhere)
+    feat.jet_pfcand_npixhits = 0;
+    feat.jet_pfcand_nstriphits = 0;
+    // Direct candidate kinematics:
+    feat.jet_pfcand_pt = cand->pt();
+    feat.jet_pfcand_eta = cand->eta();
+    feat.jet_pfcand_phi = cand->phi();
+    feat.jet_pfcand_energy = cand->energy();
 
 #ifdef DEBUG
-    std::cout << "DEBUG Charged Candidate: pt=" << cand->pt() 
-              << " eta=" << cand->eta() 
-              << " phi=" << cand->phi() 
-              << " sip2d=" << feat.Cpfcan_BtagPf_trackSip2dVal 
-              << " sip2dSig=" << feat.Cpfcan_BtagPf_trackSip2dSig 
-              << " etaRel=" << feat.Cpfcan_BtagPf_trackEtaRel
+    std::cout << "DEBUG Charged Candidate:" 
+              << " deta=" << feat.jet_pfcand_deta 
+              << " dphi=" << feat.jet_pfcand_dphi 
+              << " pt_log=" << feat.jet_pfcand_pt_log 
+              << " energy_log=" << feat.jet_pfcand_energy_log 
               << std::endl;
 #endif
   }
@@ -184,7 +191,7 @@ private:
       const auto& d3d_meas = btagbtvdeep::vertexD3d(sv, pv);
       svfeat.jet_sv_d3d       = d3d_meas.value();
       svfeat.jet_sv_d3dsig   = btagbtvdeep::catch_infs_and_bound(d3d_meas.value() / d3d_meas.error(), 0, -1, 800);
-      svfeat.jet_sv_energy_log = std::log(sv.energy());
+      svfeat.jet_sv_pt_log = std::log(sv.pt());
       
       // Append the filled HLT secondary vertex features.
       features.vtx_features.push_back(svfeat);
@@ -316,26 +323,6 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
 #ifdef DEBUG
     std::cout << "Processing jet #" << jet_n << ": pt=" << jet.pt() << " eta=" << jet.eta() << " phi=" << jet.phi() << std::endl;
 #endif
-
-    // New: Find and print matching gen jet from the "ak4GenJets" collection.
-    /*const reco::GenJet* matchedGenJet = nullptr;
-    double minDR2 = 1e6;
-    for (const auto& gj : *genJets) {
-      double dr2 = reco::deltaR2(jet, gj);
-      if (dr2 < minDR2 && dr2 < 0.16) { // using 0.4 threshold squared (0.16)
-        minDR2 = dr2;
-        matchedGenJet = &gj;
-      }
-    }
-    if (matchedGenJet) {
-      std::cout << "  Matched ak4GenJets: pt = " << matchedGenJet->pt() 
-                << ", eta = " << matchedGenJet->eta() 
-                << ", phi = " << matchedGenJet->phi() 
-                << ", energy = " << matchedGenJet->energy()
-                << ", pdgId = " << matchedGenJet->pdgId() << std::endl;
-    } else {
-      std::cout << "  No matching ak4GenJets found" << std::endl;
-    }*/
 
     btagbtvdeep::hltParticleTransformerAK4Features hltFeatures;
     if (jet.pt() < min_jet_pt_ || std::abs(jet.eta()) > max_jet_eta_) {
@@ -498,21 +485,10 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
 #endif
 
       // --- Compute Global Features ---
-      hltFeatures.global_features.jet_pt   = jet.pt();
-      hltFeatures.global_features.jet_eta  = jet.eta();
-      hltFeatures.global_features.nCpfcan  = hltFeatures.cpf_candidates.size();
-      hltFeatures.global_features.nNpfcan  = hltFeatures.npf_candidates.size();
-      hltFeatures.global_features.nsv      = hltFeatures.vtx_features.size();
-    std::cout << std::endl;
-      // Optionally compute CSV-related features; defaulting to 0 if not available.
-      hltFeatures.global_features.TagVarCSV_trackSumJetEtRatio = 0;
-      hltFeatures.global_features.TagVarCSV_trackSumJetDeltaR    = 0;
-      hltFeatures.global_features.TagVarCSV_vertexCategory       = 0;
-      hltFeatures.global_features.TagVarCSV_trackSip2dValAboveCharm  = 0;
-      hltFeatures.global_features.TagVarCSV_trackSip2dSigAboveCharm  = 0;
-      hltFeatures.global_features.TagVarCSV_trackSip3dValAboveCharm  = 0;
-      hltFeatures.global_features.TagVarCSV_trackSip3dSigAboveCharm  = 0;
-      hltFeatures.global_features.TagVarCSV_jetNTracksEtaRel       = 0;
+      hltFeatures.global_features.jet_pt    = jet.pt();
+      hltFeatures.global_features.jet_eta   = jet.eta();
+      hltFeatures.global_features.jet_phi   = jet.phi();
+      hltFeatures.global_features.jet_energy = jet.energy();
     }  // end jet kinematics check
 
     // Create the TagInfo with the persistent jet reference and the filled HLT features.
@@ -532,18 +508,6 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
     std::cout << "  -- Global Features --\n";
     std::cout << "    jet_pt: " << features.global_features.jet_pt << "\n";
     std::cout << "    jet_eta: " << features.global_features.jet_eta << "\n";
-    std::cout << "    nCpfcan: " << features.global_features.nCpfcan << "\n";
-    std::cout << "    nNpfcan: " << features.global_features.nNpfcan << "\n";
-    std::cout << "    nsv: " << features.global_features.nsv << "\n";
-    std::cout << "    npv: " << features.global_features.npv << "\n";
-    std::cout << "    TagVarCSV_trackSumJetEtRatio: " << features.global_features.TagVarCSV_trackSumJetEtRatio << "\n";
-    std::cout << "    TagVarCSV_trackSumJetDeltaR: " << features.global_features.TagVarCSV_trackSumJetDeltaR << "\n";
-    std::cout << "    TagVarCSV_vertexCategory: " << features.global_features.TagVarCSV_vertexCategory << "\n";
-    std::cout << "    TagVarCSV_trackSip2dValAboveCharm: " << features.global_features.TagVarCSV_trackSip2dValAboveCharm << "\n";
-    std::cout << "    TagVarCSV_trackSip2dSigAboveCharm: " << features.global_features.TagVarCSV_trackSip2dSigAboveCharm << "\n";
-    std::cout << "    TagVarCSV_trackSip3dValAboveCharm: " << features.global_features.TagVarCSV_trackSip3dValAboveCharm << "\n";
-    std::cout << "    TagVarCSV_trackSip3dSigAboveCharm: " << features.global_features.TagVarCSV_trackSip3dSigAboveCharm << "\n";
-    std::cout << "    TagVarCSV_jetNTracksEtaRel: " << features.global_features.TagVarCSV_jetNTracksEtaRel << "\n";
     
     // Print charged PF candidates features
     std::cout << "  -- Charged PF Candidates (" << features.cpf_candidates.size() << ") --\n";
@@ -565,7 +529,6 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
       std::cout << "      Cpfcan_VTX_ass: " << cpf.Cpfcan_VTX_ass << "\n";
       std::cout << "      Cpfcan_puppiw: " << cpf.Cpfcan_puppiw << "\n";
       std::cout << "      Cpfcan_chi2: " << cpf.Cpfcan_chi2 << "\n";
-      std::cout << "      Cpfcan_quality: " << cpf.Cpfcan_quality << "\n";
       std::cout << "      Cpfcan_pt: " << cpf.Cpfcan_pt << "\n";
       std::cout << "      Cpfcan_eta: " << cpf.Cpfcan_eta << "\n";
       std::cout << "      Cpfcan_phi: " << cpf.Cpfcan_phi << "\n";
@@ -596,7 +559,7 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
       std::cout << "    SV #" << j << ":\n";
       std::cout << "      jet_sv_ntrack: " << sv.jet_sv_ntrack << "\n";
       std::cout << "      jet_sv_mass: " << sv.jet_sv_mass << "\n";
-      std::cout << "      jet_sv_energy_log: " << sv.jet_sv_energy_log << "\n";
+      std::cout << "      jet_sv_pt_log: " << sv.jet_sv_pt_log << "\n";
       std::cout << "      jet_sv_deta: " << sv.jet_sv_deta << "\n";
       std::cout << "      jet_sv_dphi: " << sv.jet_sv_dphi << "\n";
       std::cout << "      jet_sv_chi2: " << sv.jet_sv_chi2 << "\n";

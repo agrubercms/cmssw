@@ -5,11 +5,11 @@ hltParticleTransformerDiscriminatorsJetTags = cms.EDProducer("BTagProbabilityToD
       cms.PSet(name = cms.string("BvsAll"),
         numerator = cms.VInputTag(
             'hltParticleTransformerONNXJetTags:probb',
-            'hltParticleTransformerONNXJetTags:problepb'
+            'hltParticleTransformerONNXJetTags:probg'
         ),
         denominator = cms.VInputTag(
             'hltParticleTransformerONNXJetTags:probb',
-            'hltParticleTransformerONNXJetTags:problepb',
+            'hltParticleTransformerONNXJetTags:probg',
             'hltParticleTransformerONNXJetTags:probc',
             'hltParticleTransformerONNXJetTags:probuds'
         )
@@ -18,17 +18,19 @@ hltParticleTransformerDiscriminatorsJetTags = cms.EDProducer("BTagProbabilityToD
         numerator = cms.VInputTag('hltParticleTransformerONNXJetTags:probc'),
         denominator = cms.VInputTag(
             'hltParticleTransformerONNXJetTags:probb',
-            'hltParticleTransformerONNXJetTags:problepb',
+            'hltParticleTransformerONNXJetTags:probg',
             'hltParticleTransformerONNXJetTags:probc',
             'hltParticleTransformerONNXJetTags:probuds'
         )
       ),
       cms.PSet(name = cms.string("TauvsAll"),
-        numerator = cms.VInputTag('hltParticleTransformerONNXJetTags:probtau'),
+        numerator = cms.VInputTag('hltParticleTransformerONNXJetTags:probtaup',
+        'hltParticleTransformerONNXJetTags:probtaum'),
         denominator = cms.VInputTag(
             'hltParticleTransformerONNXJetTags:probb',
-            'hltParticleTransformerONNXJetTags:problepb',
-            'hltParticleTransformerONNXJetTags:probtau',
+            'hltParticleTransformerONNXJetTags:probg',
+            'hltParticleTransformerONNXJetTags:probtaup',
+            'hltParticleTransformerONNXJetTags:probtaum',
             'hltParticleTransformerONNXJetTags:probc',
             'hltParticleTransformerONNXJetTags:probuds'
         )

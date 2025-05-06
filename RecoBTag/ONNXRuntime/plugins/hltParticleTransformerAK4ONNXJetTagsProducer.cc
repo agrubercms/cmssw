@@ -48,20 +48,20 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       kVtxFeatures = 3
     };
 
-    // Global features: fixed size remains.
-    size_t global_size = 14;
+    // Global features: fixed size now 4.
+    size_t global_size = 4;
 
     // For charged PF candidates:
-    constexpr static unsigned n_max_cpf_candidates_ = 26; // maximum candidates per jet
-    unsigned n_features_cpf_; // number of features per candidate (should be 20)
+    constexpr static unsigned n_max_cpf_candidates_ = 50; // updated maximum candidates per jet
+    unsigned n_features_cpf_; // now 26 features per candidate
 
     // For neutral PF candidates:
-    constexpr static unsigned n_max_npf_candidates_ = 25; // maximum candidates per jet
-    unsigned n_features_npf_; // per candidate (should be 10)
+    constexpr static unsigned n_max_npf_candidates_ = 0; // no neutral candidates
+    unsigned n_features_npf_; // set to 0
 
     // For SV candidates:
-    constexpr static unsigned n_max_sv_candidates_ = 5;  // maximum candidates per jet
-    unsigned n_features_sv_; // per candidate (should be 14)
+    constexpr static unsigned n_max_sv_candidates_ = 5;  // remains
+    unsigned n_features_sv_; // updated to 14
 
     std::vector<unsigned> input_sizes_;
     std::vector<std::vector<int64_t>> input_shapes_;  // shapes of each input group (-1 for dynamic axis)
@@ -127,9 +127,9 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
 
         // Restore proper feature geometry per candidate group:
         input_shapes_ = {
-            {(int64_t)1, (int64_t)global_size},              // global features: shape [1,14]
-            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},         // cpf features: shape [1,26,20]
-            {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},         // npf features: shape [1,25,10]
+            {(int64_t)1, (int64_t)global_size},              // global features: shape [1,4]
+            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},         // cpf features: shape [1,50,26]
+            {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},         // npf features: shape [1,0,0]
             {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}           // vtx features: shape [1,5,14]
         };
         
@@ -159,24 +159,17 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
   void hltParticleTransformerAK4ONNXJetTagsProducer::get_input_sizes(
       const reco::hltParticleTransformerAK4TagInfo& taginfo) {
     const auto& features = taginfo.features();
-    // Set per-candidate feature dimensions
-    n_features_cpf_ = 20; // charged PF: 20 features per candidate
-    n_features_npf_ = 10; // neutral PF: 10 features per candidate
-    n_features_sv_  = 14; // SV: 14 features per candidate
+    n_features_cpf_ = 26; // updated: 26 features per charged candidate
+    n_features_npf_ = 0;  // updated: 0 features per neutral candidate
+    n_features_sv_  = 14; // updated: 14 features per vertex candidate
 
-    // These variable declarations are unused, so we'll comment them out
-    // const auto n_cpf_candidates = std::min(features.cpf_candidates.size(), (size_t)n_max_cpf_candidates_);
-    // const auto n_npf_candidates = std::min(features.npf_candidates.size(), (size_t)n_max_npf_candidates_);
-    // const auto n_sv_candidates  = std::min(features.vtx_features.size(),  (size_t)n_max_sv_candidates_);
-
-    std::vector<unsigned int> input_sizes = std::vector<unsigned int>{ 
+    std::vector<unsigned int> input_sizes = {
         static_cast<unsigned int>(global_size),
         static_cast<unsigned int>(n_max_cpf_candidates_ * n_features_cpf_),
         static_cast<unsigned int>(n_max_npf_candidates_ * n_features_npf_),
         static_cast<unsigned int>(n_max_sv_candidates_ * n_features_sv_)
     };
 
-    // init data storage
     data_.clear();
     for (const auto& len : input_sizes) {
       data_.emplace_back(1 * len, 0);
@@ -187,119 +180,98 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
 
   void hltParticleTransformerAK4ONNXJetTagsProducer::make_inputs(const btagbtvdeep::hltParticleTransformerAK4Features& features) {
     float* ptr = nullptr;
-    unsigned offset = 0;
-
-    // Global features: fill in order of declaration
-    assert(data_[kGlobalFeatures].size() >= global_size);
-    float* start = &data_[kGlobalFeatures][0]; // store start pointer
-    ptr = start;
-    *ptr++ = features.global_features.jet_pt;
-    *ptr++ = features.global_features.jet_eta;
-    *ptr++ = features.global_features.nCpfcan;
-    *ptr++ = features.global_features.nNpfcan;
-    *ptr++ = features.global_features.nsv;
-    *ptr++ = features.global_features.npv;
-    *ptr++ = features.global_features.TagVarCSV_trackSumJetEtRatio;
-    *ptr++ = features.global_features.TagVarCSV_trackSumJetDeltaR;
-    *ptr++ = features.global_features.TagVarCSV_vertexCategory;
-    *ptr++ = features.global_features.TagVarCSV_trackSip2dValAboveCharm;
-    *ptr++ = features.global_features.TagVarCSV_trackSip2dSigAboveCharm;
-    *ptr++ = features.global_features.TagVarCSV_trackSip3dValAboveCharm;
-    *ptr++ = features.global_features.TagVarCSV_trackSip3dSigAboveCharm;
-    *ptr++ = features.global_features.TagVarCSV_jetNTracksEtaRel;
-    // Assert that exactly 14 values were written
-    assert(ptr == start + global_size);
+    // Global features: new order: jet_pt, jet_eta, jet_phi, jet_energy
+    {
+      assert(data_[kGlobalFeatures].size() >= global_size);
+      float* start = &data_[kGlobalFeatures][0];
+      ptr = start;
+      *ptr++ = features.global_features.jet_pt;
+      *ptr++ = features.global_features.jet_eta;
+      *ptr++ = features.global_features.jet_phi;
+      *ptr++ = features.global_features.jet_energy;
+      assert(ptr == start + global_size);
+    }
     
-    // Charged PF candidates
-    assert(data_[kCpfCandidates].size() >= n_max_cpf_candidates_ * n_features_cpf_);
-    offset = 0;
-    for (std::size_t c_pf_n = 0; c_pf_n < std::min(features.cpf_candidates.size(), (std::size_t)n_max_cpf_candidates_); c_pf_n++) {
-      ptr = &data_[kCpfCandidates][offset + c_pf_n * n_features_cpf_];
-      const auto& cpf = features.cpf_candidates[c_pf_n];
-      float* start_cpf = ptr; // store pointer start for this candidate
-      *ptr++ = cpf.Cpfcan_BtagPf_trackEtaRel;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackPtRel;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackPPar;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackDeltaR;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackPParRatio;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackSip2dVal;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackSip2dSig;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackSip3dVal;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackSip3dSig;
-      *ptr++ = cpf.Cpfcan_BtagPf_trackJetDistVal;
-      *ptr++ = cpf.Cpfcan_ptrel;
-      *ptr++ = cpf.Cpfcan_drminsv;
-      *ptr++ = cpf.Cpfcan_VTX_ass;
-      *ptr++ = cpf.Cpfcan_puppiw;
-      *ptr++ = cpf.Cpfcan_chi2;
-      *ptr++ = cpf.Cpfcan_quality;
-      *ptr++ = cpf.Cpfcan_pt;
-      *ptr++ = cpf.Cpfcan_eta;
-      *ptr++ = cpf.Cpfcan_phi;
-      *ptr++ = cpf.Cpfcan_e;
-      // Now expect 20 features.
-      int written = ptr - start_cpf;
-      if (written != static_cast<int>(n_features_cpf_)) {
+    // Charged PF candidates (new order, 26 features per candidate):
+    {
+      assert(data_[kCpfCandidates].size() >= n_max_cpf_candidates_ * n_features_cpf_);
+      unsigned offset = 0;
+      for (std::size_t c_pf_n = 0; c_pf_n < std::min(features.cpf_candidates.size(), (std::size_t)n_max_cpf_candidates_); c_pf_n++) {
+        ptr = &data_[kCpfCandidates][offset + c_pf_n * n_features_cpf_];
+        const auto& cpf = features.cpf_candidates[c_pf_n];
+        float* start_cpf = ptr;
+        *ptr++ = cpf.jet_pfcand_deta;
+        *ptr++ = cpf.jet_pfcand_dphi;
+        *ptr++ = cpf.jet_pfcand_pt_log;
+        *ptr++ = cpf.jet_pfcand_energy_log;
+        *ptr++ = cpf.jet_pfcand_charge;
+        *ptr++ = cpf.jet_pfcand_frompv;
+        *ptr++ = cpf.jet_pfcand_nlostinnerhits;
+        *ptr++ = cpf.jet_pfcand_track_chi2;
+        *ptr++ = cpf.jet_pfcand_track_qual;
+        *ptr++ = cpf.jet_pfcand_dz;
+        *ptr++ = cpf.jet_pfcand_dzsig;
+        *ptr++ = cpf.jet_pfcand_dxy;
+        *ptr++ = cpf.jet_pfcand_dxysig;
+        *ptr++ = cpf.jet_pfcand_etarel;
+        *ptr++ = cpf.jet_pfcand_pperp_ratio;
+        *ptr++ = cpf.jet_pfcand_ppara_ratio;
+        *ptr++ = cpf.jet_pfcand_trackjet_d3d;
+        *ptr++ = cpf.jet_pfcand_trackjet_d3dsig;
+        *ptr++ = cpf.jet_pfcand_trackjet_dist;
+        *ptr++ = cpf.jet_pfcand_trackjet_decayL;
+        *ptr++ = cpf.jet_pfcand_npixhits;
+        *ptr++ = cpf.jet_pfcand_nstriphits;
+        *ptr++ = cpf.jet_pfcand_pt;
+        *ptr++ = cpf.jet_pfcand_eta;
+        *ptr++ = cpf.jet_pfcand_phi;
+        *ptr++ = cpf.jet_pfcand_energy;
+        int written = ptr - start_cpf;
+        if (written != static_cast<int>(n_features_cpf_)) {
           std::cout << "Charged candidate " << c_pf_n << ": wrote " << written 
                     << " features, expected " << n_features_cpf_ << std::endl;
+        }
+        assert(written == static_cast<int>(n_features_cpf_));
       }
-      assert(written == static_cast<int>(n_features_cpf_));
     }
     
-    // Neutral PF candidates
-    assert(data_[kNpfCandidates].size() >= n_max_npf_candidates_ * n_features_npf_);
-    offset = 0;
-    for (std::size_t n_pf_n = 0; n_pf_n < std::min(features.npf_candidates.size(), (std::size_t)n_max_npf_candidates_); n_pf_n++) {
-      ptr = &data_[kNpfCandidates][offset + n_pf_n * n_features_npf_];
-      const auto& npf = features.npf_candidates[n_pf_n];
-      float* start_npf = ptr; // store pointer start for this candidate
-      *ptr++ = npf.Npfcan_ptrel;
-      *ptr++ = npf.Npfcan_deltaR;
-      *ptr++ = npf.Npfcan_isGamma;
-      *ptr++ = npf.Npfcan_HadFrac;
-      *ptr++ = npf.Npfcan_drminsv;
-      *ptr++ = npf.Npfcan_puppiw;
-      *ptr++ = npf.Npfcan_pt;
-      *ptr++ = npf.Npfcan_eta;
-      *ptr++ = npf.Npfcan_phi;
-      *ptr++ = npf.Npfcan_energy;
-      int writtenNpf = ptr - start_npf;
-      if (writtenNpf != static_cast<int>(n_features_npf_)) {
-          std::cout << "Neutral candidate " << n_pf_n << ": wrote " << writtenNpf
-                    << " features, expected " << n_features_npf_ << std::endl;
-      }
-      assert(writtenNpf == static_cast<int>(n_features_npf_));
+    // Neutral PF candidates: none expected.
+    {
+      assert(data_[kNpfCandidates].size() == 0 || data_[kNpfCandidates].empty());
     }
     
-    // SV candidates
-    assert(data_[kVtxFeatures].size() >= n_max_sv_candidates_ * n_features_sv_);
-    offset = 0;
-    for (std::size_t sv_n = 0; sv_n < std::min(features.vtx_features.size(), (std::size_t)n_max_sv_candidates_); sv_n++) {
-      ptr = &data_[kVtxFeatures][offset + sv_n * n_features_sv_];
-      const auto& sv = features.vtx_features[sv_n];
-      float* start_sv = ptr; // store pointer start for this candidate
-      *ptr++ = sv.jet_sv_ntrack;
-      *ptr++ = sv.jet_sv_mass;
-      *ptr++ = sv.jet_sv_energy_log;
-      *ptr++ = sv.jet_sv_deta;
-      *ptr++ = sv.jet_sv_dphi;
-      *ptr++ = sv.jet_sv_chi2;
-      *ptr++ = sv.jet_sv_dxy;
-      *ptr++ = sv.jet_sv_dxysig;
-      *ptr++ = sv.jet_sv_d3d;
-      *ptr++ = sv.jet_sv_d3dsig;
-      *ptr++ = sv.jet_sv_pt;
-      *ptr++ = sv.jet_sv_eta;
-      *ptr++ = sv.jet_sv_phi;
-      *ptr++ = sv.jet_sv_energy;
-      int writtenSv = ptr - start_sv;
-      if (writtenSv != static_cast<int>(n_features_sv_)) {
+    // SV candidates (new order: jet_sv_deta, jet_sv_dphi, jet_sv_pt_log, jet_sv_mass,
+    // jet_sv_ntrack, jet_sv_chi2, jet_sv_dxy, jet_sv_dxysig, jet_sv_d3d, jet_sv_d3dsig,
+    // jet_sv_pt, jet_sv_eta, jet_sv_phi, jet_sv_energy):
+    {
+      assert(data_[kVtxFeatures].size() >= n_max_sv_candidates_ * n_features_sv_);
+      unsigned offset = 0;
+      for (std::size_t sv_n = 0; sv_n < std::min(features.vtx_features.size(), (std::size_t)n_max_sv_candidates_); sv_n++) {
+        ptr = &data_[kVtxFeatures][offset + sv_n * n_features_sv_];
+        const auto& sv = features.vtx_features[sv_n];
+        float* start_sv = ptr;
+        *ptr++ = sv.jet_sv_deta;
+        *ptr++ = sv.jet_sv_dphi;
+        *ptr++ = sv.jet_sv_pt_log;
+        *ptr++ = sv.jet_sv_mass;
+        *ptr++ = sv.jet_sv_ntrack;
+        *ptr++ = sv.jet_sv_chi2;
+        *ptr++ = sv.jet_sv_dxy;
+        *ptr++ = sv.jet_sv_dxysig;
+        *ptr++ = sv.jet_sv_d3d;
+        *ptr++ = sv.jet_sv_d3dsig;
+        *ptr++ = sv.jet_sv_pt;
+        *ptr++ = sv.jet_sv_eta;
+        *ptr++ = sv.jet_sv_phi;
+        *ptr++ = sv.jet_sv_energy;
+        int writtenSv = ptr - start_sv;
+        if (writtenSv != static_cast<int>(n_features_sv_)) {
           std::cout << "SV candidate " << sv_n << ": wrote " << writtenSv
                     << " features, expected " << n_features_sv_ << std::endl;
+        }
+        assert(writtenSv == static_cast<int>(n_features_sv_));
       }
-      assert(writtenSv == static_cast<int>(n_features_sv_));
     }
-
   }
 
 //define this as a plug-in

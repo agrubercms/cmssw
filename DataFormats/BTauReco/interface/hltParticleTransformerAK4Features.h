@@ -8,42 +8,38 @@ class hltGlobalFeatures {
 public:
   float jet_pt;
   float jet_eta;
-  float nCpfcan;
-  float nNpfcan;
-  float nsv;
-  float npv;
-  float TagVarCSV_trackSumJetEtRatio;
-  float TagVarCSV_trackSumJetDeltaR;
-  float TagVarCSV_vertexCategory;
-  float TagVarCSV_trackSip2dValAboveCharm;
-  float TagVarCSV_trackSip2dSigAboveCharm;
-  float TagVarCSV_trackSip3dValAboveCharm;
-  float TagVarCSV_trackSip3dSigAboveCharm;
-  float TagVarCSV_jetNTracksEtaRel;
+  float jet_phi;
+  float jet_energy;
 };
 
 class hltCpfCandidateFeatures {
 public:
-  float Cpfcan_BtagPf_trackEtaRel;
-  float Cpfcan_BtagPf_trackPtRel;
-  float Cpfcan_BtagPf_trackPPar;
-  float Cpfcan_BtagPf_trackDeltaR;
-  float Cpfcan_BtagPf_trackPParRatio;
-  float Cpfcan_BtagPf_trackSip2dVal;
-  float Cpfcan_BtagPf_trackSip2dSig;
-  float Cpfcan_BtagPf_trackSip3dVal;
-  float Cpfcan_BtagPf_trackSip3dSig;
-  float Cpfcan_BtagPf_trackJetDistVal;
-  float Cpfcan_ptrel;
-  float Cpfcan_drminsv;
-  float Cpfcan_VTX_ass;
-  float Cpfcan_puppiw;
-  float Cpfcan_chi2;
-  float Cpfcan_quality;
-  float Cpfcan_pt;
-  float Cpfcan_eta;
-  float Cpfcan_phi;
-  float Cpfcan_e;
+  float jet_pfcand_deta;
+  float jet_pfcand_dphi;
+  float jet_pfcand_pt_log;
+  float jet_pfcand_energy_log;
+  float jet_pfcand_charge;
+  float jet_pfcand_frompv;
+  float jet_pfcand_nlostinnerhits;
+  float jet_pfcand_track_chi2;
+  float jet_pfcand_track_qual;
+  float jet_pfcand_dz;
+  float jet_pfcand_dzsig;
+  float jet_pfcand_dxy;
+  float jet_pfcand_dxysig;
+  float jet_pfcand_etarel;
+  float jet_pfcand_pperp_ratio;
+  float jet_pfcand_ppara_ratio;
+  float jet_pfcand_trackjet_d3d;
+  float jet_pfcand_trackjet_d3dsig;
+  float jet_pfcand_trackjet_dist;
+  float jet_pfcand_trackjet_decayL;
+  float jet_pfcand_npixhits;
+  float jet_pfcand_nstriphits;
+  float jet_pfcand_pt;
+  float jet_pfcand_eta;
+  float jet_pfcand_phi;
+  float jet_pfcand_energy;
 };
 
 class hltNpfCandidateFeatures {
@@ -62,11 +58,11 @@ public:
 
 class hltVtxFeatures {
 public:
-  float jet_sv_ntrack;
-  float jet_sv_mass;
-  float jet_sv_energy_log;
   float jet_sv_deta;
   float jet_sv_dphi;
+  float jet_sv_pt_log;  // updated name from jet_sv_energy_log
+  float jet_sv_mass;
+  float jet_sv_ntrack;
   float jet_sv_chi2;
   float jet_sv_dxy;
   float jet_sv_dxysig;
