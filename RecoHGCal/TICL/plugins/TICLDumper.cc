@@ -161,6 +161,7 @@ public:
     if (tracksterType_ != TracksterType::Trackster) {
       trackster_tree_->Branch("regressed_pt", &simtrackster_regressed_pt);
       trackster_tree_->Branch("pdgID", &simtrackster_pdgID);
+      trackster_tree_->Branch("mother_pdgID", &simtrackster_mother_pdgID);
       trackster_tree_->Branch("trackIdx", &simtrackster_trackIdx);
       trackster_tree_->Branch("trackTime", &simtrackster_trackTime);
       trackster_tree_->Branch("timeBoundary", &simtrackster_timeBoundary);
@@ -219,6 +220,7 @@ public:
 
     simtrackster_regressed_pt.clear();
     simtrackster_pdgID.clear();
+    simtrackster_mother_pdgID.clear();
     simtrackster_trackIdx.clear();
     simtrackster_trackTime.clear();
     simtrackster_timeBoundary.clear();
@@ -260,9 +262,28 @@ public:
                      DetectorTools const& detectorTools,
                      edm::Handle<std::vector<SimCluster>> simClusters_h,
                      edm::Handle<std::vector<CaloParticle>> caloparticles_h,
-                     std::vector<reco::Track> const& tracks) {
+                     std::vector<reco::Track> const& tracks,
+                     std::vector<reco::GenParticle> const& genParticles) {
     nTracksters = tracksters.size();
     nClusters = clusters.size();
+
+    std::function<const reco::GenParticle*(const reco::GenParticle*)> findOriginalParticle =
+    [&findOriginalParticle](const reco::GenParticle* particle) -> const reco::GenParticle* {
+      if (!particle)
+        return nullptr;
+      // Stop recursion if we hit a pi0 (pdgid 111)
+      if (particle->pdgId() == 111) {
+        return particle;
+      }
+      // If the particle is a photon (pdgid == 22) and has a mother, follow the mother chain.
+      if (std::abs(particle->pdgId()) == 22 && particle->numberOfMothers() > 0) {
+        const reco::Candidate* candidateMother = particle->mother();
+        const reco::GenParticle* genMother = dynamic_cast<const reco::GenParticle*>(candidateMother);
+        return findOriginalParticle(genMother);
+      }
+      return particle;
+    };
+
     for (auto trackster_iterator = tracksters.begin(); trackster_iterator != tracksters.end(); ++trackster_iterator) {
       //per-trackster analysis
       trackster_time.push_back(trackster_iterator->time());
@@ -292,6 +313,38 @@ public:
         auto const& caloparticles = *caloparticles_h;
 
         simtrackster_timeBoundary.push_back(trackster_iterator->boundaryTime());
+
+                // Here we override the pdgID using the genParticle.
+        int seedIdx = trackster_iterator->seedIndex();
+        int finalPdgId = -999;
+        if (trackster_iterator->seedID() == caloparticles_h.id()) {
+          // Use CaloParticle and then get the genParticle via g4Tracks()[0].genpartIndex()
+          const CaloParticle& cp = caloparticles[seedIdx];
+
+          int genIdx = cp.g4Tracks()[0].genpartIndex();
+          if (genIdx >= 0 && genIdx < static_cast<int>(genParticles.size())) {
+            const reco::GenParticle& genp = genParticles[genIdx];
+            const reco::GenParticle* orig = findOriginalParticle(&genp);
+            finalPdgId = orig ? orig->pdgId() : genp.pdgId();
+          }
+        } else {
+          // For SimTracksterSC, use the SimCluster
+          const SimCluster& sc = simclusters[seedIdx];
+          for (const auto& cp : caloparticles) {
+            // Loop over the simClusters associated to the CaloParticle
+            for (const auto& scRef : cp.simClusters()) {
+                if (&(*scRef) == &sc) {  
+                  int genIdx = cp.g4Tracks()[0].genpartIndex();
+                  if (genIdx >= 0 && genIdx < static_cast<int>(genParticles.size())) {
+                    const reco::GenParticle& genp = genParticles[genIdx];
+                    const reco::GenParticle* orig = findOriginalParticle(&genp);
+                    finalPdgId = orig ? orig->pdgId() : genp.pdgId();
+                  }
+                }
+            }
+          }
+        }
+        simtrackster_mother_pdgID.push_back(finalPdgId);
 
         using CaloObjectVariant = std::variant<CaloParticle, SimCluster>;
         CaloObjectVariant caloObj;
@@ -414,6 +467,10 @@ public:
       trackster_vertices_multiplicity.push_back(vertices_multiplicity);
     }
   }
+  
+  const std::vector<int>& simtracksterMotherPDG() const {
+    return simtrackster_mother_pdgID;
+  }
 
 private:
   TracksterType tracksterType_;
@@ -445,6 +502,7 @@ private:
   // for simtrackster
   std::vector<float> simtrackster_regressed_pt;
   std::vector<int> simtrackster_pdgID;
+  std::vector<int> simtrackster_mother_pdgID;
   std::vector<int> simtrackster_trackIdx;
   std::vector<float> simtrackster_trackTime;
   std::vector<float> simtrackster_timeBoundary;
@@ -601,6 +659,8 @@ private:
   edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeometry_token_;
   const edm::EDGetTokenT<std::vector<ticl::Trackster>> simTracksters_SC_token_;  // needed for simticlcandidate
   const edm::EDGetTokenT<std::vector<TICLCandidate>> simTICLCandidate_token_;
+  const edm::EDGetTokenT<reco::GenParticleCollection> genParticles_token_;
+
 
   // associators
   const std::vector<edm::ParameterSet>
@@ -917,6 +977,7 @@ TICLDumper::TICLDumper(const edm::ParameterSet& ps)
           consumes<std::vector<ticl::Trackster>>(ps.getParameter<edm::InputTag>("simtrackstersSC"))),
       simTICLCandidate_token_(
           consumes<std::vector<TICLCandidate>>(ps.getParameter<edm::InputTag>("simTICLCandidates"))),
+      genParticles_token_(consumes<reco::GenParticleCollection>(ps.getParameter<edm::InputTag>("genParticles"))),
       associations_parameterSets_(ps.getParameter<std::vector<edm::ParameterSet>>("associators")),
       // The DumperHelpers should not be moved after construction (needed by TTree branch pointers), so construct them all here
       associations_dumperHelpers_(associations_parameterSets_.size()),
@@ -1187,6 +1248,11 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
   event.getByToken(tracks_pos_mtd_token_, trackPosMtd_h);
   const auto& trackPosMtd = *trackPosMtd_h;
 
+  edm::Handle<reco::GenParticleCollection> genParticles_h;
+  event.getByToken(genParticles_token_, genParticles_h);
+  const auto& genParticles = *genParticles_h;
+
+
   // superclustering
   if (saveSuperclustering_)  // To support running with Mustache
     superclustering_linkedResultTracksters = event.get(superclustering_linkedResultTracksters_token);
@@ -1253,7 +1319,7 @@ void TICLDumper::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     edm::Handle<std::vector<ticl::Trackster>> tracksters_handle;
     std::vector<ticl::Trackster> const& tracksters = event.get<std::vector<ticl::Trackster>>(tracksters_token_[i]);
     tracksters_dumperHelpers_[i].fillFromEvent(
-        tracksters, clusters, layerClustersTimes, *detectorTools_, simclusters_h, caloparticles_h, tracks);
+        tracksters, clusters, layerClustersTimes, *detectorTools_, simclusters_h, caloparticles_h, tracks, genParticles);
     tracksters_trees[i]->Fill();
   }
 
@@ -1543,7 +1609,9 @@ void TICLDumper::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
       ->setComment(
           "Trackster collection used to produce the reco::SuperCluster, used to provide a mapping back to the "
           "tracksters used in superclusters");
-
+  desc.add<edm::InputTag>("genParticles", edm::InputTag("genParticles"));
+  desc.add<edm::InputTag>("genBarcodes", edm::InputTag("genParticles"));
+       
   desc.add<edm::InputTag>("simtrackstersSC", edm::InputTag("ticlSimTracksters"))
       ->setComment("SimTrackster from CaloParticle collection to use for simTICLcandidates");
   desc.add<edm::InputTag>("simTICLCandidates", edm::InputTag("ticlSimTracksters"));
