@@ -138,10 +138,10 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         
         assert(outputs.size() == flav_names_.size());
         // Debug output with clearer labels
-        /*std::cout << "Jet " << jet_n << " probabilities:" << std::endl;
+        std::cout << "Jet " << jet_n << " probabilities:" << std::endl;
         for (size_t i = 0; i < outputs.size(); ++i) {
           std::cout << "  " << flav_names_[i] << ": " << outputs[i] << std::endl;
-        }*/
+        }
       }
 
       const auto& jet_ref = taginfo.jet();
@@ -272,6 +272,37 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         assert(writtenSv == static_cast<int>(n_features_sv_));
       }
     }
+        // --- Printout of the filled tensors ---
+    std::cout << "=== Dumping Tensors for ONNX Runtime ===" << std::endl;
+    // Print Global Features
+    std::cout << "  -- Global Features (data_[" << kGlobalFeatures << "], size: " << data_[kGlobalFeatures].size() << ") --" << std::endl;
+    for (size_t i = 0; i < data_[kGlobalFeatures].size(); ++i) {
+      std::cout << "    data_[" << kGlobalFeatures << "][" << i << "]: " << data_[kGlobalFeatures][i] << std::endl;
+    }
+
+    // Print Charged PF Candidates Features
+    std::cout << "  -- Charged PF Candidates (data_[" << kCpfCandidates << "], size: " << data_[kCpfCandidates].size() << ") --" << std::endl;
+    std::cout << "    (Formatted as [cand_idx * n_features + feature_idx])" << std::endl;
+    for (size_t i = 0; i < data_[kCpfCandidates].size(); ++i) {
+      // Print only a few elements for brevity if the tensor is too large, or print all
+      // For now, printing all. Can be adjusted if output is too verbose.
+      std::cout << "    data_[" << kCpfCandidates << "][" << i << "]: " << data_[kCpfCandidates][i] << std::endl;
+    }
+
+    // Print Neutral PF Candidates Features
+    std::cout << "  -- Neutral PF Candidates (data_[" << kNpfCandidates << "], size: " << data_[kNpfCandidates].size() << ") --" << std::endl;
+    for (size_t i = 0; i < data_[kNpfCandidates].size(); ++i) {
+      std::cout << "    data_[" << kNpfCandidates << "][" << i << "]: " << data_[kNpfCandidates][i] << std::endl;
+    }
+
+    // Print Vertex Features
+    std::cout << "  -- Vertex Features (data_[" << kVtxFeatures << "], size: " << data_[kVtxFeatures].size() << ") --" << std::endl;
+    std::cout << "    (Formatted as [vtx_idx * n_features + feature_idx])" << std::endl;
+    for (size_t i = 0; i < data_[kVtxFeatures].size(); ++i) {
+      std::cout << "    data_[" << kVtxFeatures << "][" << i << "]: " << data_[kVtxFeatures][i] << std::endl;
+    }
+    std::cout << "=== End Tensor Dump ===" << std::endl;
+    // --- End Printout ---
   }
 
 //define this as a plug-in

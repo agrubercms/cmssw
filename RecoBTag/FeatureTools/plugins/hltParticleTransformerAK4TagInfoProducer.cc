@@ -33,7 +33,7 @@
 #include <vector>
 #include <cmath>
 
-//#define DEBUG
+#define DEBUG
 
 // The HLT producer produces a vector of hltParticleTransformerAK4TagInfo.
 class hltParticleTransformerAK4TagInfoProducer : public edm::stream::EDProducer<> {
@@ -53,105 +53,14 @@ private:
   // Helper: Given a candidate pointer (from the jet’s daughter list) and the candidate collection handle,
   // search for the candidate and return a persistent edm::Ref.
   edm::Ref<edm::View<reco::Candidate>> getPersistentCandidate(
-      const reco::Candidate* cand,
-      const edm::Handle<edm::View<reco::Candidate>>& handle) const {
+    const reco::Candidate* cand, 
+    const edm::Handle<edm::View<reco::Candidate>>& handle) const {
     for (size_t idx = 0; idx < handle->size(); ++idx) {
       if (&(handle->at(idx)) == cand) {
         return edm::Ref<edm::View<reco::Candidate>>(handle, idx);
       }
     }
     return edm::Ref<edm::View<reco::Candidate>>();
-  }
-
-  // --- Local helper conversion methods for candidates (charged/neutral) ---
-  // Updated to use reco::PFCandidate instead of pat::PackedCandidate.
-  static void convertHLTChargedCandidate(const reco::PFCandidate* cand,
-                                         const reco::Jet& jet,
-                                         const btagbtvdeep::TrackInfoBuilder& track_info,
-                                         bool isWeightedJet,
-                                         float drminpfcandsv,
-                                         float jetR,
-                                         float puppiw,
-                                         hltCpfCandidateFeatures& feat,
-                                         bool flip,
-                                         float distminpfcandsv) {
-    float constituentWeight = isWeightedJet ? puppiw : 1.0f;
-    // New candidate feature mapping:
-    feat.jet_pfcand_deta = cand->eta() - jet.eta();
-    feat.jet_pfcand_dphi = reco::deltaPhi(cand->phi(), jet.phi());
-    feat.jet_pfcand_pt_log = (cand->pt() > 0) ? std::log(cand->pt()) : 0;
-    feat.jet_pfcand_energy_log = (cand->energy() > 0) ? std::log(cand->energy()) : 0;
-    feat.jet_pfcand_charge = static_cast<float>(cand->charge());
-    feat.jet_pfcand_frompv = 0; // default since no fromPV info available
-    feat.jet_pfcand_nlostinnerhits = 0; // default
-    if (cand->trackRef().isNonnull()) {
-      const auto& track = *(cand->trackRef());
-      feat.jet_pfcand_track_chi2 = btagbtvdeep::catch_infs_and_bound(track.normalizedChi2(), 300, -1, 300);
-      feat.jet_pfcand_track_qual = static_cast<float>(track.qualityMask());
-    } else {
-      feat.jet_pfcand_track_chi2 = -1;
-      feat.jet_pfcand_track_qual = 0;
-    }
-    // Defaults for dz and dxy features (could be updated if available)
-    feat.jet_pfcand_dz = 0;
-    feat.jet_pfcand_dzsig = 0;
-    feat.jet_pfcand_dxy = 0;
-    feat.jet_pfcand_dxysig = 0;
-    // Use track info for relative quantities:
-    feat.jet_pfcand_etarel = track_info.getTrackEtaRel();
-    feat.jet_pfcand_pperp_ratio = track_info.getTrackPtRel();
-    feat.jet_pfcand_ppara_ratio = track_info.getTrackPParRatio();
-    // Map track-related distances (using available track info methods)
-    feat.jet_pfcand_trackjet_d3d = track_info.getTrackJetDistVal();
-    feat.jet_pfcand_trackjet_d3dsig = track_info.getTrackSip3dSig();
-    feat.jet_pfcand_trackjet_dist = track_info.getTrackJetDistVal();
-    feat.jet_pfcand_trackjet_decayL = 0; // default, update if decay length becomes available
-    // Default hit counts (if not computed elsewhere)
-    feat.jet_pfcand_npixhits = 0;
-    feat.jet_pfcand_nstriphits = 0;
-    // Direct candidate kinematics:
-    feat.jet_pfcand_pt = cand->pt();
-    feat.jet_pfcand_eta = cand->eta();
-    feat.jet_pfcand_phi = cand->phi();
-    feat.jet_pfcand_energy = cand->energy();
-
-#ifdef DEBUG
-    std::cout << "DEBUG Charged Candidate:" 
-              << " deta=" << feat.jet_pfcand_deta 
-              << " dphi=" << feat.jet_pfcand_dphi 
-              << " pt_log=" << feat.jet_pfcand_pt_log 
-              << " energy_log=" << feat.jet_pfcand_energy_log 
-              << std::endl;
-#endif
-  }
-
-  static void convertHLTNeutralCandidate(const reco::PFCandidate* cand,
-                                         const reco::Jet& jet,
-                                         bool isWeightedJet,
-                                         float drminpfcandsv,
-                                         float jetR,
-                                         float puppiw,
-                                         hltNpfCandidateFeatures& feat) {
-    float constituentWeight = isWeightedJet ? puppiw : 1.0f;
-    feat.Npfcan_ptrel = (cand->pt() * constituentWeight) / jet.pt();
-    feat.Npfcan_deltaR = btagbtvdeep::catch_infs_and_bound(reco::deltaR(*cand, jet), 0, -0.6, 0, -0.6);
-    feat.Npfcan_drminsv = btagbtvdeep::catch_infs_and_bound(drminpfcandsv, 0, -jetR, 0, -jetR);
-    feat.Npfcan_pt = cand->pt();
-    feat.Npfcan_eta = cand->eta();
-    feat.Npfcan_phi = cand->phi();
-    feat.Npfcan_energy = cand->energy();
-    feat.Npfcan_puppiw = puppiw;
-    feat.Npfcan_HadFrac = (cand->hcalEnergy())/(cand->energy()); // replaced cand->hcalFraction()
-    feat.Npfcan_isGamma = cand->pdgId() == 22;
-
-#ifdef DEBUG
-    std::cout << "DEBUG Neutral Candidate: pt=" << cand->pt() 
-              << " eta=" << cand->eta() 
-              << " phi=" << cand->phi() 
-              << " energy=" << cand->energy() 
-              << " isGamma=" << feat.Npfcan_isGamma
-              << std::endl;
-#endif
   }
 
   // --- New helper: Explicit SV conversion ---
@@ -184,7 +93,7 @@ private:
       svfeat.jet_sv_energy    = sv.energy();
       svfeat.jet_sv_mass      = sv.mass();
       svfeat.jet_sv_ntrack    = sv.numberOfDaughters();
-      svfeat.jet_sv_chi2      = sv.vertexChi2();
+      svfeat.jet_sv_chi2      = sv.vertexNormalizedChi2();
       const auto& dxy_meas = btagbtvdeep::vertexDxy(sv, pv);
       svfeat.jet_sv_dxy       = dxy_meas.value();
       svfeat.jet_sv_dxysig   = btagbtvdeep::catch_infs_and_bound(dxy_meas.value() / dxy_meas.error(), 0, -1, 800);
@@ -216,9 +125,13 @@ private:
   const bool fallback_puppi_weight_;
   const bool fallback_vertex_association_;
   const double max_sip3dsig_for_flip_;
+  bool use_puppi_value_map_ = false;
+  bool use_vertex_association_ = true;
 
-  const edm::EDGetTokenT<edm::ValueMap<float>> puppi_value_map_token_;
-  const edm::EDGetTokenT<edm::Association<VertexCollection>> vertex_associator_token_;
+  edm::EDGetTokenT<edm::ValueMap<float>> puppi_value_map_token_;
+  edm::EDGetTokenT<edm::Association<VertexCollection>> vertex_associator_token_;
+  edm::EDGetTokenT<edm::ValueMap<int>> vertex_associator_quality_token_;
+
   // New GenJet token for input file "ak4GenJets" from process "HLT"
   const edm::EDGetTokenT<std::vector<reco::GenJet>> genjet_token_;
 };
@@ -241,6 +154,7 @@ hltParticleTransformerAK4TagInfoProducer::hltParticleTransformerAK4TagInfoProduc
       max_sip3dsig_for_flip_(iConfig.getParameter<double>("max_sip3dsig_for_flip")),
       puppi_value_map_token_(consumes<edm::ValueMap<float>>(iConfig.getParameter<edm::InputTag>("puppi_value_map"))),
       vertex_associator_token_(consumes<edm::Association<VertexCollection>>(iConfig.getParameter<edm::InputTag>("vertex_associator"))),
+      vertex_associator_quality_token_(consumes<edm::ValueMap<int>>(iConfig.getParameter<edm::InputTag>("vertex_associator"))),
       // New token initialization for GenJets from input file "ak4GenJets" from process "HLT"
       genjet_token_(consumes<std::vector<reco::GenJet>>(edm::InputTag(iConfig.getParameter<edm::InputTag>("ak4GenJets"))))
 {
@@ -253,7 +167,7 @@ void hltParticleTransformerAK4TagInfoProducer::fillDescriptions(edm::Configurati
   desc.add<double>("jet_radius", 0.4);
   desc.add<double>("min_candidate_pt", 0.95);
   desc.add<bool>("flip", false);
-  desc.add<edm::InputTag>("vertices", edm::InputTag("hltPixelVertices"));
+  desc.add<edm::InputTag>("vertices", edm::InputTag("hltGoodOfflinePrimaryVertices"));
   desc.add<edm::InputTag>("secondary_vertices", edm::InputTag("hltInclusiveCandidateSecondaryVertices"));
   desc.add<edm::InputTag>("jets", edm::InputTag("hltAK4PFJets"));
   desc.add<edm::InputTag>("candidates", edm::InputTag("hltPFCandidates"));
@@ -300,14 +214,24 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
   edm::Handle<SVCollection> svs;
   iEvent.getByToken(sv_token_, svs);
 #ifdef DEBUG
-  std::cout << "DEBUG: Retrieved SV collection: valid=" << svs.isValid() 
-            << (svs.isValid() ? ", size=" + std::to_string(svs->size()) : "") 
-            << std::endl;
+  std::cout << "DEBUG: Retrieved SV collection: valid=" << svs.isValid()
+            << (svs.isValid() ? ", size=" + std::to_string(svs->size()) : "") << std::endl;
 #endif
 
   // New: Retrieve handle for GenJets
   edm::Handle<std::vector<reco::GenJet>> genJets;
   iEvent.getByToken(genjet_token_, genJets);
+  edm::Handle<edm::ValueMap<float>> puppi_value_map;
+  if (use_puppi_value_map_) {
+    iEvent.getByToken(puppi_value_map_token_, puppi_value_map);
+  }
+
+  edm::Handle<edm::ValueMap<int>> pvasq_value_map;
+  edm::Handle<edm::Association<VertexCollection>> pvas;
+  if (use_vertex_association_) {
+    iEvent.getByToken(vertex_associator_quality_token_, pvasq_value_map);
+    iEvent.getByToken(vertex_associator_token_, pvas);
+  }
 
   edm::ESHandle<TransientTrackBuilder> track_builder = iSetup.getHandle(track_builder_token_);
 
@@ -321,7 +245,8 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
     const auto& jet = jets->at(jet_n);
 
 #ifdef DEBUG
-    std::cout << "Processing jet #" << jet_n << ": pt=" << jet.pt() << " eta=" << jet.eta() << " phi=" << jet.phi() << std::endl;
+    std::cout << "Processing jet #" << jet_n << ": pt=" << jet.pt() << " eta=" << jet.eta() << " phi=" << jet.phi()
+              << std::endl;
 #endif
 
     btagbtvdeep::hltParticleTransformerAK4Features hltFeatures;
@@ -332,7 +257,7 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
 #endif
     } else {
       hltFeatures.is_filled = true;
-      
+
       // --- Process Secondary Vertices (explicit conversion) ---
       fillSVFeaturesHLT(hltFeatures, jet, pv, svs.product(), jet_radius_, flip_);
 
@@ -340,154 +265,122 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
       std::cout << "  Found " << hltFeatures.vtx_features.size() << " secondary vertices for this jet" << std::endl;
 #endif
 
-      // --- Build candidate ordering ---
-      std::vector<btagbtvdeep::SortingClass<size_t>> c_sorted, n_sorted;
-      std::map<unsigned int, btagbtvdeep::TrackInfoBuilder> trackinfos;
-      
-      // First, count valid candidates
-      int validChargedCount = 0, validNeutralCount = 0;
+      // --- Collect and sort PF candidates by pt ---
+      std::vector<const reco::PFCandidate*> chargedCandidates;
+      std::vector<const reco::PFCandidate*> neutralCandidates;
+
       for (unsigned int i = 0; i < jet.numberOfDaughters(); ++i) {
-        // Assume all daughters are reco::PFCandidate*
-        const reco::PFCandidate* cand = static_cast<const reco::PFCandidate*>(jet.daughter(i));
+        const auto* cand = dynamic_cast<const reco::PFCandidate*>(jet.daughter(i));
         if (!cand || cand->pt() < min_candidate_pt_)
           continue;
-        
-        if (cand->charge() != 0) {
-          validChargedCount++;
-        } else {
-          validNeutralCount++;
-        }
-      }
-      
-#ifdef DEBUG
-      std::cout << "  Found " << validChargedCount << " charged and " << validNeutralCount 
-                << " neutral candidates (above pt threshold " << min_candidate_pt_ << ")" << std::endl;
-#endif
-
-      // Pre-allocate vectors for sorting and features
-      c_sorted.reserve(validChargedCount);
-      n_sorted.reserve(validNeutralCount);
-      
-      for (unsigned int i = 0; i < jet.numberOfDaughters(); ++i) {
-        // Assume all daughters are reco::PFCandidate*
-        const reco::PFCandidate* cand = static_cast<const reco::PFCandidate*>(jet.daughter(i));
-        if (!cand || cand->pt() < min_candidate_pt_)
-          continue;
-
-#ifdef DEBUG
-        std::cout << "  Candidate #" << i << " type: " << typeid(*cand).name() << std::endl;
-#endif
-        
-        if (cand->charge() != 0) {
-          // For charged candidates, build track info
-          auto& tinfo = trackinfos.emplace(i, track_builder).first->second;
-          tinfo.buildTrackInfo(cand, jet.momentum().Unit(), GlobalVector(jet.px(), jet.py(), jet.pz()), pv);
-          
-          // Only include candidates with valid track info
-          float sip2dsig = tinfo.getTrackSip2dSig();
-          if (std::isfinite(sip2dsig)) {
-            c_sorted.emplace_back(i,
-                                 sip2dsig,
-                                 -btagbtvdeep::mindrsvpfcand(*svs, cand),
-                                 cand->pt() / jet.pt());
-#ifdef DEBUG
-            std::cout << "  Adding charged candidate idx=" << i << " pt=" << cand->pt() 
-                      << " sip2dsig=" << sip2dsig << std::endl;
-#endif
-          }
-        } else {
-          n_sorted.emplace_back(i, -1, -btagbtvdeep::mindrsvpfcand(*svs, cand), cand->pt() / jet.pt());
-#ifdef DEBUG
-          std::cout << "  Adding neutral candidate idx=" << i << " pt=" << cand->pt() << std::endl;
-#endif
-        }
+        if (cand->charge() != 0)
+          chargedCandidates.push_back(cand);
+        else
+          neutralCandidates.push_back(cand);
       }
 
-      // Sort candidates by track properties
-      std::sort(c_sorted.begin(), c_sorted.end(), btagbtvdeep::SortingClass<std::size_t>::compareByABCInv);
-      std::sort(n_sorted.begin(), n_sorted.end(), btagbtvdeep::SortingClass<std::size_t>::compareByABCInv);
-      
-      auto c_sortedindices = btagbtvdeep::invertSortingVector(c_sorted);
-      auto n_sortedindices = btagbtvdeep::invertSortingVector(n_sorted);
+      auto sortByPt = [](const reco::PFCandidate* a, const reco::PFCandidate* b) { return a->pt() > b->pt(); };
+      std::sort(chargedCandidates.begin(), chargedCandidates.end(), sortByPt);
+      std::sort(neutralCandidates.begin(), neutralCandidates.end(), sortByPt);
 
-#ifdef DEBUG
-      std::cout << "  After sorting: " << c_sorted.size() << " charged, " << n_sorted.size() << " neutral candidates" << std::endl;
-#endif
+      hltFeatures.cpf_candidates.reserve(chargedCandidates.size());
+      hltFeatures.npf_candidates.reserve(neutralCandidates.size());
 
-      // Resize feature vectors to match sorted candidate counts
-      hltFeatures.cpf_candidates.resize(c_sorted.size());
-      hltFeatures.npf_candidates.resize(n_sorted.size());
-
-      // --- Loop over candidates ---
-      size_t chargedCount = 0, neutralCount = 0;
-      for (unsigned int i = 0; i < jet.numberOfDaughters(); ++i) {
-        // Assume all daughters are reco::PFCandidate*
-        const reco::PFCandidate* cand = static_cast<const reco::PFCandidate*>(jet.daughter(i));
-        if (!cand || cand->pt() < min_candidate_pt_) 
-          continue;
-
-        edm::Ref<edm::View<reco::Candidate>> candRef = getPersistentCandidate(cand, tracks);
-
-        // Get PUPPI weight: if not available, default to 1.0.
+      for (const auto* cand : chargedCandidates) {
         float puppiw = 1.0;
-        if (fallback_puppi_weight_) {
-          // Uncomment below if PFCandidate provides puppiWeight(); otherwise value remains 1.0.
-          // puppiw = pf_cand->puppiWeight();
-        }
-
         float drminpfcandsv = btagbtvdeep::mindrsvpfcand(*svs, cand);
-        float distminpfcandsv = 0;
-
-        if (cand->charge() != 0) {
-          auto it = std::find_if(c_sorted.begin(), c_sorted.end(),
-                                 [i](const auto& sc) { return sc.get() == i; });
-          if (it == c_sorted.end()) continue;
-
-          size_t entry = c_sortedindices.at(chargedCount);
-          ++chargedCount;
-          auto& c_pf_features = hltFeatures.cpf_candidates.at(entry);
-
-          if (cand->trackRef().isNonnull()) {
-            const reco::Track& pseudoTrack = *(cand->trackRef());
-            reco::TransientTrack transientTrack = track_builder->build(pseudoTrack);
-            distminpfcandsv = btagbtvdeep::mindistsvpfcand(*svs, transientTrack);
-          }
-
-          convertHLTChargedCandidate(cand,
-                                     jet,
-                                     trackinfos.at(i),
-                                     is_weighted_jet_,
-                                     drminpfcandsv,
-                                     static_cast<float>(jet_radius_),
-                                     puppiw,
-                                     c_pf_features,
-                                     flip_,
-                                     distminpfcandsv);
-        } else {
-          if (neutralCount >= n_sorted.size()) continue;
-          size_t entry = n_sortedindices.at(neutralCount);
-          ++neutralCount;
-          auto& n_pf_features = hltFeatures.npf_candidates.at(entry);
-
-          convertHLTNeutralCandidate(cand,
-                                     jet,
-                                     is_weighted_jet_,
-                                     drminpfcandsv,
-                                     static_cast<float>(jet_radius_),
-                                     puppiw,
-                                     n_pf_features);
+        if (cand->trackRef().isNonnull()) {
+          reco::TransientTrack transientTrack = track_builder->build(*(cand->trackRef()));
         }
-      }  // end candidate loop
 
-#ifdef DEBUG
-      std::cout << "  Processed " << chargedCount << "/" << c_sorted.size() << " charged and "
-                << neutralCount << "/" << n_sorted.size() << " neutral candidates" << std::endl;
-#endif
+        btagbtvdeep::TrackInfoBuilder trackInfo(track_builder);
+        // Note: The offline version builds TrackInfo using the jet_dir, jet_ref_track_dir, and pv.
+        // Your HLT version uses jet.momentum().Unit(), GlobalVector(jet.px(), jet.py(), jet.pz()), and pv. This seems consistent.
+        
+        int pv_ass_quality = 0; // Default quality
+        reco::VertexRef pv_ass = reco::VertexRef(vtxs, 0); // Default to the leading primary vertex from the main vertex collection
+
+        if (use_vertex_association_) {
+          // Get a persistent edm::Ref to the candidate in the original 'tracks' collection
+          edm::Ref<edm::View<reco::Candidate>> candRef = getPersistentCandidate(cand, tracks);
+
+          if (candRef.isNonnull()) {
+            // Ensure the handles are valid before attempting to access their data
+            // (getByToken would throw if the product is not found, but an extra check is safe)
+            if (pvas.isValid() && pvasq_value_map.isValid()) {
+              // Get the associated vertex using the 'pvas' handle
+              const reco::VertexRef& pv_orig = (*pvas)[candRef]; 
+              if (pv_orig.isNonnull()) {
+                pv_ass = pv_orig; // Update pv_ass to the actual associated vertex
+              }
+              // Get the association quality
+              pv_ass_quality = (*pvasq_value_map)[candRef];
+            } else {
+              // Optional: Log a warning if maps are expected but not valid
+              std::cout << "Warning: Vertex association maps are not valid." << std::endl;
+            }
+          } else {
+            // Optional: Log a warning if candidate not found in original collection
+            std::cout << "Warning: Candidate not found in original track collection for PV association." << std::endl;
+          }
+        }
+        
+        // Pass the determined pv_ass (dereferenced) to TrackInfoBuilder
+        // pv_ass will be the associated PV if found and use_vertex_association_ is true,
+        // otherwise it defaults to the leading PV. This is safe because vtxs is checked for non-emptiness earlier.
+        trackInfo.buildTrackInfo(cand, jet.momentum().Unit(), GlobalVector(jet.px(), jet.py(), jet.pz()), *pv_ass);
+
+        hltCpfCandidateFeatures feat;
+        feat.jet_pfcand_deta = jet.eta() - cand->eta();
+        feat.jet_pfcand_dphi = reco::deltaPhi(jet.phi(), cand->phi());
+        feat.jet_pfcand_pt_log = (cand->pt() > 0) ? std::log(cand->pt()) : 0;
+        feat.jet_pfcand_energy_log = (cand->energy() > 0) ? std::log(cand->energy()) : 0;
+        feat.jet_pfcand_charge = static_cast<float>(cand->charge());
+        feat.jet_pfcand_frompv = static_cast<float>(pv_ass_quality); // Use the obtained quality
+        feat.jet_pfcand_nlostinnerhits = btagbtvdeep::lost_inner_hits_from_pfcand(*cand);
+        
+        if (cand->bestTrack()) {
+          const auto& track = *(cand->bestTrack());
+          feat.jet_pfcand_track_chi2 = track.normalizedChi2();
+          feat.jet_pfcand_track_qual = static_cast<float>(track.qualityMask());
+          // Use the potentially updated pv_ass for dz/dxy calculations
+          feat.jet_pfcand_dz = track.dz(pv_ass->position()); 
+          feat.jet_pfcand_dzsig =
+              fabs(btagbtvdeep::catch_infs_and_bound(track.dz(pv_ass->position()) / track.dzError(), 300, -1, 300));
+          feat.jet_pfcand_dxy = track.dxy(pv_ass->position());
+          feat.jet_pfcand_dxysig =
+              fabs(btagbtvdeep::catch_infs_and_bound(track.dxy(pv_ass->position()) / track.dxyError(), 300, -1, 300));
+          feat.jet_pfcand_npixhits = track.hitPattern().numberOfValidPixelHits();
+          feat.jet_pfcand_nstriphits = track.hitPattern().stripLayersWithMeasurement();
+        } else {
+          feat.jet_pfcand_track_chi2 = -1;
+          feat.jet_pfcand_track_qual = 0;
+          feat.jet_pfcand_dz = 0;
+          feat.jet_pfcand_dzsig = 0;
+          feat.jet_pfcand_dxy = 0;
+          feat.jet_pfcand_dxysig = 0;
+          feat.jet_pfcand_npixhits = 0;
+          feat.jet_pfcand_nstriphits = 0;
+        }
+        feat.jet_pfcand_etarel = trackInfo.getTrackEtaRel();
+        feat.jet_pfcand_pperp_ratio = trackInfo.getTrackPtRatio(); 
+        feat.jet_pfcand_ppara_ratio = trackInfo.getTrackPParRatio();
+        feat.jet_pfcand_trackjet_d3d = trackInfo.getTrackSip3dVal();
+        feat.jet_pfcand_trackjet_d3dsig = trackInfo.getTrackSip3dSig();
+        feat.jet_pfcand_trackjet_dist = -trackInfo.getTrackJetDistVal();
+        feat.jet_pfcand_trackjet_decayL = trackInfo.getTrackJetDecayLen();
+        feat.jet_pfcand_pt = cand->pt();
+        feat.jet_pfcand_eta = cand->eta();
+        feat.jet_pfcand_phi = cand->phi();
+        feat.jet_pfcand_energy = cand->energy();
+
+        hltFeatures.cpf_candidates.push_back(feat);
+      }
 
       // --- Compute Global Features ---
-      hltFeatures.global_features.jet_pt    = jet.pt();
-      hltFeatures.global_features.jet_eta   = jet.eta();
-      hltFeatures.global_features.jet_phi   = jet.phi();
+      hltFeatures.global_features.jet_pt = jet.pt();
+      hltFeatures.global_features.jet_eta = jet.eta();
+      hltFeatures.global_features.jet_phi = jet.phi();
       hltFeatures.global_features.jet_energy = jet.energy();
     }  // end jet kinematics check
 
@@ -508,49 +401,6 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
     std::cout << "  -- Global Features --\n";
     std::cout << "    jet_pt: " << features.global_features.jet_pt << "\n";
     std::cout << "    jet_eta: " << features.global_features.jet_eta << "\n";
-    
-    // Print charged PF candidates features
-    std::cout << "  -- Charged PF Candidates (" << features.cpf_candidates.size() << ") --\n";
-    for (size_t j = 0; j < features.cpf_candidates.size(); ++j) {
-      const auto& cpf = features.cpf_candidates[j];
-      std::cout << "    CPF #" << j << ":\n";
-      std::cout << "      Cpfcan_BtagPf_trackEtaRel: " << cpf.Cpfcan_BtagPf_trackEtaRel << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackPtRel: " << cpf.Cpfcan_BtagPf_trackPtRel << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackPPar: " << cpf.Cpfcan_BtagPf_trackPPar << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackDeltaR: " << cpf.Cpfcan_BtagPf_trackDeltaR << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackPParRatio: " << cpf.Cpfcan_BtagPf_trackPParRatio << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackSip2dVal: " << cpf.Cpfcan_BtagPf_trackSip2dVal << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackSip2dSig: " << cpf.Cpfcan_BtagPf_trackSip2dSig << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackSip3dVal: " << cpf.Cpfcan_BtagPf_trackSip3dVal << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackSip3dSig: " << cpf.Cpfcan_BtagPf_trackSip3dSig << "\n";
-      std::cout << "      Cpfcan_BtagPf_trackJetDistVal: " << cpf.Cpfcan_BtagPf_trackJetDistVal << "\n";
-      std::cout << "      Cpfcan_ptrel: " << cpf.Cpfcan_ptrel << "\n";
-      std::cout << "      Cpfcan_drminsv: " << cpf.Cpfcan_drminsv << "\n";
-      std::cout << "      Cpfcan_VTX_ass: " << cpf.Cpfcan_VTX_ass << "\n";
-      std::cout << "      Cpfcan_puppiw: " << cpf.Cpfcan_puppiw << "\n";
-      std::cout << "      Cpfcan_chi2: " << cpf.Cpfcan_chi2 << "\n";
-      std::cout << "      Cpfcan_pt: " << cpf.Cpfcan_pt << "\n";
-      std::cout << "      Cpfcan_eta: " << cpf.Cpfcan_eta << "\n";
-      std::cout << "      Cpfcan_phi: " << cpf.Cpfcan_phi << "\n";
-      std::cout << "      Cpfcan_e: " << cpf.Cpfcan_e << "\n";
-    }
-    
-    // Print neutral PF candidates features
-    std::cout << "  -- Neutral PF Candidates (" << features.npf_candidates.size() << ") --\n";
-    for (size_t j = 0; j < features.npf_candidates.size(); ++j) {
-      const auto& npf = features.npf_candidates[j];
-      std::cout << "    NPF #" << j << ":\n";
-      std::cout << "      Npfcan_ptrel: " << npf.Npfcan_ptrel << "\n";
-      std::cout << "      Npfcan_deltaR: " << npf.Npfcan_deltaR << "\n";
-      std::cout << "      Npfcan_isGamma: " << npf.Npfcan_isGamma << "\n";
-      std::cout << "      Npfcan_HadFrac: " << npf.Npfcan_HadFrac << "\n";
-      std::cout << "      Npfcan_drminsv: " << npf.Npfcan_drminsv << "\n";
-      std::cout << "      Npfcan_puppiw: " << npf.Npfcan_puppiw << "\n";
-      std::cout << "      Npfcan_pt: " << npf.Npfcan_pt << "\n";
-      std::cout << "      Npfcan_eta: " << npf.Npfcan_eta << "\n";
-      std::cout << "      Npfcan_phi: " << npf.Npfcan_phi << "\n";
-      std::cout << "      Npfcan_energy: " << npf.Npfcan_energy << "\n";
-    }
     
     // Print secondary vertex features
     std::cout << "  -- Secondary Vertices (" << features.vtx_features.size() << ") --\n";
