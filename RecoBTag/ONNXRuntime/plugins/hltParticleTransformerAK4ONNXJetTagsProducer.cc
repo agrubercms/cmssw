@@ -53,7 +53,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
 
     // For charged PF candidates:
     constexpr static unsigned n_max_cpf_candidates_ = 50; // updated maximum candidates per jet
-    unsigned n_features_cpf_; // now 26 features per candidate
+    unsigned n_features_cpf_; // now 22 features per candidate
 
     // For neutral PF candidates:
     constexpr static unsigned n_max_npf_candidates_ = 0; // no neutral candidates
@@ -128,7 +128,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         // Restore proper feature geometry per candidate group:
         input_shapes_ = {
             {(int64_t)1, (int64_t)global_size},              // global features: shape [1,4]
-            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},         // cpf features: shape [1,50,26]
+            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},         // cpf features: shape [1,50,22]
             {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},         // npf features: shape [1,0,0]
             {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}           // vtx features: shape [1,5,14]
         };
@@ -159,7 +159,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
   void hltParticleTransformerAK4ONNXJetTagsProducer::get_input_sizes(
       const reco::hltParticleTransformerAK4TagInfo& taginfo) {
     const auto& features = taginfo.features();
-    n_features_cpf_ = 26; // updated: 26 features per charged candidate
+    n_features_cpf_ = 22; // updated: 22 features per charged candidate (removed frompv, track_chi2, track_qual, dzsig)
     n_features_npf_ = 0;  // updated: 0 features per neutral candidate
     n_features_sv_  = 14; // updated: 14 features per vertex candidate
 
@@ -192,7 +192,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       assert(ptr == start + global_size);
     }
     
-    // Charged PF candidates (new order, 26 features per candidate):
+    // Charged PF candidates (new order, 22 features per candidate):
     {
       assert(data_[kCpfCandidates].size() >= n_max_cpf_candidates_ * n_features_cpf_);
       unsigned offset = 0;
@@ -205,12 +205,8 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         *ptr++ = cpf.jet_pfcand_pt_log;
         *ptr++ = cpf.jet_pfcand_energy_log;
         *ptr++ = cpf.jet_pfcand_charge;
-        *ptr++ = cpf.jet_pfcand_frompv;
         *ptr++ = cpf.jet_pfcand_nlostinnerhits;
-        *ptr++ = cpf.jet_pfcand_track_chi2;
-        *ptr++ = cpf.jet_pfcand_track_qual;
         *ptr++ = cpf.jet_pfcand_dz;
-        *ptr++ = cpf.jet_pfcand_dzsig;
         *ptr++ = cpf.jet_pfcand_dxy;
         *ptr++ = cpf.jet_pfcand_dxysig;
         *ptr++ = cpf.jet_pfcand_etarel;

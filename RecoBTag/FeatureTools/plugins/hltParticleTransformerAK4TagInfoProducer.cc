@@ -27,6 +27,10 @@
 #include "DataFormats/Candidate/interface/VertexCompositePtrCandidate.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
 
+#include "RecoVertex/VertexTools/interface/VertexDistanceXY.h"
+#include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
+#include "DataFormats/Math/interface/Vector3D.h" // For GlobalVector
+
 #include <iostream>
 #include <algorithm>
 #include <map>
@@ -77,32 +81,43 @@ private:
       return btagbtvdeep::sv_vertex_comparator(sv1, sv2, pv);
     });
     
+    GlobalVector jet_dir(jet.px(), jet.py(), jet.pz()); // Jet direction for signing
+
     // Loop over sorted SVs and fill features for those within the jet radius.
-    for (const auto& sv : svs_sorted) {
-      if (reco::deltaR2(sv, jet) > (jetR * jetR))
+    for (const auto& sv_cand : svs_sorted) { // Renamed sv to sv_cand to avoid conflict with reco_sv
+      if (reco::deltaR2(sv_cand, jet) > (jetR * jetR))
         continue;
       
       // Use the HLT-specific vertex features type.
       hltVtxFeatures svfeat;
       // Map available quantities.
-      svfeat.jet_sv_pt        = sv.pt();
-      svfeat.jet_sv_deta      = btagbtvdeep::catch_infs_and_bound(std::fabs(sv.eta() - jet.eta()) - 0.5, 0, -2, 0);
-      svfeat.jet_sv_dphi      = btagbtvdeep::catch_infs_and_bound(std::fabs(reco::deltaPhi(sv.phi(), jet.phi())) - 0.5, 0, -2, 0);
-      svfeat.jet_sv_eta       = sv.eta();
-      svfeat.jet_sv_phi       = sv.phi();
-      svfeat.jet_sv_energy    = sv.energy();
-      svfeat.jet_sv_mass      = sv.mass();
-      svfeat.jet_sv_ntrack    = sv.numberOfDaughters();
-      svfeat.jet_sv_chi2      = sv.vertexNormalizedChi2();
-      const auto& dxy_meas = btagbtvdeep::vertexDxy(sv, pv);
+      svfeat.jet_sv_pt        = sv_cand.pt();
+      svfeat.jet_sv_deta      = sv_cand.eta() - jet.eta();
+      svfeat.jet_sv_dphi      = reco::deltaPhi(sv_cand.phi(), jet.phi());
+      svfeat.jet_sv_eta       = sv_cand.eta();
+      svfeat.jet_sv_phi       = sv_cand.phi();
+      svfeat.jet_sv_energy    = sv_cand.energy();
+      svfeat.jet_sv_mass      = sv_cand.mass();
+      svfeat.jet_sv_ntrack    = sv_cand.numberOfDaughters();
+      svfeat.jet_sv_chi2      = sv_cand.vertexNormalizedChi2();
+
+      reco::Vertex::CovarianceMatrix csv;
+      sv_cand.fillVertexCovariance(csv);
+      reco::Vertex svtx(sv_cand.vertex(), csv);
+
+      GlobalVector jet_vec(jet.px(), jet.py(), jet.pz());
+
+      VertexDistanceXY dxy;
+      auto dxy_meas = dxy.signedDistance(svtx, pv, jet_vec);
       svfeat.jet_sv_dxy       = dxy_meas.value();
-      svfeat.jet_sv_dxysig   = btagbtvdeep::catch_infs_and_bound(dxy_meas.value() / dxy_meas.error(), 0, -1, 800);
-      const auto& d3d_meas = btagbtvdeep::vertexD3d(sv, pv);
+      svfeat.jet_sv_dxysig    = std::fabs(dxy_meas.significance());
+
+      VertexDistance3D d3d;
+      auto d3d_meas = d3d.signedDistance(svtx, pv, jet_vec);
       svfeat.jet_sv_d3d       = d3d_meas.value();
-      svfeat.jet_sv_d3dsig   = btagbtvdeep::catch_infs_and_bound(d3d_meas.value() / d3d_meas.error(), 0, -1, 800);
-      svfeat.jet_sv_pt_log = std::log(sv.pt());
+      svfeat.jet_sv_d3dsig    = std::fabs(d3d_meas.significance());
+      svfeat.jet_sv_pt_log = std::log(sv_cand.pt());
       
-      // Append the filled HLT secondary vertex features.
       features.vtx_features.push_back(svfeat);
     }
   }
@@ -266,27 +281,21 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
 #endif
 
       // --- Collect and sort PF candidates by pt ---
-      std::vector<const reco::PFCandidate*> chargedCandidates;
-      std::vector<const reco::PFCandidate*> neutralCandidates;
+      std::vector<const reco::PFCandidate*> pfCandidates;
 
       for (unsigned int i = 0; i < jet.numberOfDaughters(); ++i) {
         const auto* cand = dynamic_cast<const reco::PFCandidate*>(jet.daughter(i));
         if (!cand || cand->pt() < min_candidate_pt_)
           continue;
-        if (cand->charge() != 0)
-          chargedCandidates.push_back(cand);
-        else
-          neutralCandidates.push_back(cand);
+        pfCandidates.push_back(cand);
       }
 
       auto sortByPt = [](const reco::PFCandidate* a, const reco::PFCandidate* b) { return a->pt() > b->pt(); };
-      std::sort(chargedCandidates.begin(), chargedCandidates.end(), sortByPt);
-      std::sort(neutralCandidates.begin(), neutralCandidates.end(), sortByPt);
+      std::sort(pfCandidates.begin(), pfCandidates.end(), sortByPt);
 
-      hltFeatures.cpf_candidates.reserve(chargedCandidates.size());
-      hltFeatures.npf_candidates.reserve(neutralCandidates.size());
+      hltFeatures.cpf_candidates.reserve(pfCandidates.size());
 
-      for (const auto* cand : chargedCandidates) {
+      for (const auto* cand : pfCandidates) {
         float puppiw = 1.0;
         float drminpfcandsv = btagbtvdeep::mindrsvpfcand(*svs, cand);
         if (cand->trackRef().isNonnull()) {
