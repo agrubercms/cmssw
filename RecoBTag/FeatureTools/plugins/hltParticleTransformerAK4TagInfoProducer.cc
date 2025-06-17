@@ -29,15 +29,14 @@
 
 #include "RecoVertex/VertexTools/interface/VertexDistanceXY.h"
 #include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
-#include "DataFormats/Math/interface/Vector3D.h" // For GlobalVector
-
+#include "DataFormats/Math/interface/Vector3D.h" 
 #include <iostream>
 #include <algorithm>
 #include <map>
 #include <vector>
 #include <cmath>
 
-#define DEBUG
+//#define DEBUG
 
 // The HLT producer produces a vector of hltParticleTransformerAK4TagInfo.
 class hltParticleTransformerAK4TagInfoProducer : public edm::stream::EDProducer<> {
@@ -54,8 +53,6 @@ private:
 
   void produce(edm::Event&, const edm::EventSetup&) override;
 
-  // Helper: Given a candidate pointer (from the jet’s daughter list) and the candidate collection handle,
-  // search for the candidate and return a persistent edm::Ref.
   edm::Ref<edm::View<reco::Candidate>> getPersistentCandidate(
     const reco::Candidate* cand, 
     const edm::Handle<edm::View<reco::Candidate>>& handle) const {
@@ -67,30 +64,24 @@ private:
     return edm::Ref<edm::View<reco::Candidate>>();
   }
 
-  // --- New helper: Explicit SV conversion ---
-  // This function explicitly fills secondary vertex features from a given SV.
   void fillSVFeaturesHLT(btagbtvdeep::hltParticleTransformerAK4Features &features,
                          const reco::Jet& jet,
                          const reco::Vertex& pv,
                          const SVCollection* svs,
                          double jetR,
                          bool flip) {
-    // Make a local copy of the SV collection and sort it using the provided comparator.
     SVCollection svs_sorted = *svs;
     std::sort(svs_sorted.begin(), svs_sorted.end(), [&pv](const auto& sv1, const auto& sv2) {
       return btagbtvdeep::sv_vertex_comparator(sv1, sv2, pv);
     });
     
-    GlobalVector jet_dir(jet.px(), jet.py(), jet.pz()); // Jet direction for signing
+    GlobalVector jet_dir(jet.px(), jet.py(), jet.pz());
 
-    // Loop over sorted SVs and fill features for those within the jet radius.
-    for (const auto& sv_cand : svs_sorted) { // Renamed sv to sv_cand to avoid conflict with reco_sv
+    for (const auto& sv_cand : svs_sorted) { 
       if (reco::deltaR2(sv_cand, jet) > (jetR * jetR))
         continue;
       
-      // Use the HLT-specific vertex features type.
       hltVtxFeatures svfeat;
-      // Map available quantities.
       svfeat.jet_sv_pt        = sv_cand.pt();
       svfeat.jet_sv_deta      = sv_cand.eta() - jet.eta();
       svfeat.jet_sv_dphi      = reco::deltaPhi(sv_cand.phi(), jet.phi());
@@ -122,7 +113,6 @@ private:
     }
   }
 
-  // --- Configuration parameters and tokens ---
   const double jet_radius_;
   const double min_candidate_pt_;
   const bool flip_;
@@ -147,11 +137,9 @@ private:
   edm::EDGetTokenT<edm::Association<VertexCollection>> vertex_associator_token_;
   edm::EDGetTokenT<edm::ValueMap<int>> vertex_associator_quality_token_;
 
-  // New GenJet token for input file "ak4GenJets" from process "HLT"
   const edm::EDGetTokenT<std::vector<reco::GenJet>> genjet_token_;
 };
 
-// --- Constructor ---
 hltParticleTransformerAK4TagInfoProducer::hltParticleTransformerAK4TagInfoProducer(const edm::ParameterSet& iConfig)
     : jet_radius_(iConfig.getParameter<double>("jet_radius")),
       min_candidate_pt_(iConfig.getParameter<double>("min_candidate_pt")),
@@ -170,13 +158,11 @@ hltParticleTransformerAK4TagInfoProducer::hltParticleTransformerAK4TagInfoProduc
       puppi_value_map_token_(consumes<edm::ValueMap<float>>(iConfig.getParameter<edm::InputTag>("puppi_value_map"))),
       vertex_associator_token_(consumes<edm::Association<VertexCollection>>(iConfig.getParameter<edm::InputTag>("vertex_associator"))),
       vertex_associator_quality_token_(consumes<edm::ValueMap<int>>(iConfig.getParameter<edm::InputTag>("vertex_associator"))),
-      // New token initialization for GenJets from input file "ak4GenJets" from process "HLT"
       genjet_token_(consumes<std::vector<reco::GenJet>>(edm::InputTag(iConfig.getParameter<edm::InputTag>("ak4GenJets"))))
 {
   produces<hltParticleTransformerAK4TagInfoCollection>();
 }
 
-// --- fillDescriptions ---
 void hltParticleTransformerAK4TagInfoProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.add<double>("jet_radius", 0.4);
@@ -194,12 +180,10 @@ void hltParticleTransformerAK4TagInfoProducer::fillDescriptions(edm::Configurati
   desc.add<double>("max_sip3dsig_for_flip", 99999);
   desc.add<edm::InputTag>("puppi_value_map", edm::InputTag(""));
   desc.add<edm::InputTag>("vertex_associator", edm::InputTag("hltPrimaryVertexAssociation", "original"));
-  // New parameter for GenJets input.
   desc.add<edm::InputTag>("ak4GenJets", edm::InputTag("ak4GenJets"));
   descriptions.add("hltParticleTransformerAK4TagInfos", desc);
 }
 
-// --- produce method ---
 void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   auto output_tag_infos = std::make_unique<hltParticleTransformerAK4TagInfoCollection>();
 
@@ -233,7 +217,6 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
             << (svs.isValid() ? ", size=" + std::to_string(svs->size()) : "") << std::endl;
 #endif
 
-  // New: Retrieve handle for GenJets
   edm::Handle<std::vector<reco::GenJet>> genJets;
   iEvent.getByToken(genjet_token_, genJets);
   edm::Handle<edm::ValueMap<float>> puppi_value_map;
@@ -254,7 +237,6 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
   std::cout << "=== Debug: Processing " << jets->size() << " jets ===" << std::endl;
 #endif
 
-  // Loop over jets
   for (std::size_t jet_n = 0; jet_n < jets->size(); ++jet_n) {
     edm::RefToBase<reco::Jet> jet_ref(jets, jet_n);
     const auto& jet = jets->at(jet_n);
@@ -273,14 +255,12 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
     } else {
       hltFeatures.is_filled = true;
 
-      // --- Process Secondary Vertices (explicit conversion) ---
       fillSVFeaturesHLT(hltFeatures, jet, pv, svs.product(), jet_radius_, flip_);
 
 #ifdef DEBUG
       std::cout << "  Found " << hltFeatures.vtx_features.size() << " secondary vertices for this jet" << std::endl;
 #endif
 
-      // --- Collect and sort PF candidates by pt ---
       std::vector<const reco::PFCandidate*> pfCandidates;
 
       for (unsigned int i = 0; i < jet.numberOfDaughters(); ++i) {
@@ -303,40 +283,28 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
         }
 
         btagbtvdeep::TrackInfoBuilder trackInfo(track_builder);
-        // Note: The offline version builds TrackInfo using the jet_dir, jet_ref_track_dir, and pv.
-        // Your HLT version uses jet.momentum().Unit(), GlobalVector(jet.px(), jet.py(), jet.pz()), and pv. This seems consistent.
-        
-        int pv_ass_quality = 0; // Default quality
-        reco::VertexRef pv_ass = reco::VertexRef(vtxs, 0); // Default to the leading primary vertex from the main vertex collection
+
+        int pv_ass_quality = 0; 
+        reco::VertexRef pv_ass = reco::VertexRef(vtxs, 0);
 
         if (use_vertex_association_) {
-          // Get a persistent edm::Ref to the candidate in the original 'tracks' collection
           edm::Ref<edm::View<reco::Candidate>> candRef = getPersistentCandidate(cand, tracks);
 
           if (candRef.isNonnull()) {
-            // Ensure the handles are valid before attempting to access their data
-            // (getByToken would throw if the product is not found, but an extra check is safe)
-            if (pvas.isValid() && pvasq_value_map.isValid()) {
-              // Get the associated vertex using the 'pvas' handle
+                        if (pvas.isValid() && pvasq_value_map.isValid()) {
               const reco::VertexRef& pv_orig = (*pvas)[candRef]; 
               if (pv_orig.isNonnull()) {
-                pv_ass = pv_orig; // Update pv_ass to the actual associated vertex
+                pv_ass = pv_orig; 
               }
-              // Get the association quality
               pv_ass_quality = (*pvasq_value_map)[candRef];
             } else {
-              // Optional: Log a warning if maps are expected but not valid
               std::cout << "Warning: Vertex association maps are not valid." << std::endl;
             }
           } else {
-            // Optional: Log a warning if candidate not found in original collection
             std::cout << "Warning: Candidate not found in original track collection for PV association." << std::endl;
           }
         }
         
-        // Pass the determined pv_ass (dereferenced) to TrackInfoBuilder
-        // pv_ass will be the associated PV if found and use_vertex_association_ is true,
-        // otherwise it defaults to the leading PV. This is safe because vtxs is checked for non-emptiness earlier.
         trackInfo.buildTrackInfo(cand, jet.momentum().Unit(), GlobalVector(jet.px(), jet.py(), jet.pz()), *pv_ass);
 
         hltCpfCandidateFeatures feat;
@@ -345,14 +313,13 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
         feat.jet_pfcand_pt_log = (cand->pt() > 0) ? std::log(cand->pt()) : 0;
         feat.jet_pfcand_energy_log = (cand->energy() > 0) ? std::log(cand->energy()) : 0;
         feat.jet_pfcand_charge = static_cast<float>(cand->charge());
-        feat.jet_pfcand_frompv = static_cast<float>(pv_ass_quality); // Use the obtained quality
+        feat.jet_pfcand_frompv = static_cast<float>(pv_ass_quality); 
         feat.jet_pfcand_nlostinnerhits = btagbtvdeep::lost_inner_hits_from_pfcand(*cand);
         
         if (cand->bestTrack()) {
           const auto& track = *(cand->bestTrack());
           feat.jet_pfcand_track_chi2 = track.normalizedChi2();
           feat.jet_pfcand_track_qual = static_cast<float>(track.qualityMask());
-          // Use the potentially updated pv_ass for dz/dxy calculations
           feat.jet_pfcand_dz = track.dz(pv_ass->position()); 
           feat.jet_pfcand_dzsig =
               fabs(btagbtvdeep::catch_infs_and_bound(track.dz(pv_ass->position()) / track.dzError(), 300, -1, 300));
@@ -386,18 +353,15 @@ void hltParticleTransformerAK4TagInfoProducer::produce(edm::Event& iEvent, const
         hltFeatures.cpf_candidates.push_back(feat);
       }
 
-      // --- Compute Global Features ---
       hltFeatures.global_features.jet_pt = jet.pt();
       hltFeatures.global_features.jet_eta = jet.eta();
       hltFeatures.global_features.jet_phi = jet.phi();
       hltFeatures.global_features.jet_energy = jet.energy();
-    }  // end jet kinematics check
+    } 
 
-    // Create the TagInfo with the persistent jet reference and the filled HLT features.
     output_tag_infos->emplace_back(reco::hltParticleTransformerAK4TagInfo(hltFeatures, jet_ref));
   }  // end jet loop
 
-  // --- Debug printout for all tag infos individually ---
 #ifdef DEBUG
   std::cout << "=== Debug: Individually Printed Tag Infos ===" << std::endl;
   for (std::size_t i = 0; i < output_tag_infos->size(); ++i) {

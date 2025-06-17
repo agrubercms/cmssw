@@ -48,25 +48,20 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       kVtxFeatures = 3
     };
 
-    // Global features: fixed size now 4.
     size_t global_size = 4;
 
-    // For charged PF candidates:
-    constexpr static unsigned n_max_cpf_candidates_ = 50; // updated maximum candidates per jet
-    unsigned n_features_cpf_; // now 22 features per candidate
+    constexpr static unsigned n_max_cpf_candidates_ = 50; 
+    unsigned n_features_cpf_; 
 
-    // For neutral PF candidates:
-    constexpr static unsigned n_max_npf_candidates_ = 0; // no neutral candidates
-    unsigned n_features_npf_; // set to 0
+    constexpr static unsigned n_max_npf_candidates_ = 0; 
+    unsigned n_features_npf_; 
 
-    // For SV candidates:
-    constexpr static unsigned n_max_sv_candidates_ = 5;  // remains
-    unsigned n_features_sv_; // updated to 14
+    constexpr static unsigned n_max_sv_candidates_ = 5;  
+    unsigned n_features_sv_; 
 
     std::vector<unsigned> input_sizes_;
-    std::vector<std::vector<int64_t>> input_shapes_;  // shapes of each input group (-1 for dynamic axis)
+    std::vector<std::vector<int64_t>> input_shapes_;  
 
-    // hold the input data
     FloatArrays data_;
   };
 
@@ -76,14 +71,12 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         flav_names_(iConfig.getParameter<std::vector<std::string>>("flav_names")),
         input_names_(iConfig.getParameter<std::vector<std::string>>("input_names")),
         output_names_(iConfig.getParameter<std::vector<std::string>>("output_names")) {
-    // get output names from flav_names
     for (const auto& flav_name : flav_names_) {
       produces<JetTagCollection>(flav_name);
     }
   }
 
   void hltParticleTransformerAK4ONNXJetTagsProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-    // hltParticleTransformerAK4JetTags
     edm::ParameterSetDescription desc;
     desc.add<edm::InputTag>("src", edm::InputTag("hltParticleTransformerAK4TagInfos"));
     desc.add<std::vector<std::string>>("input_names", {"global_features", "cpf_features", "npf_features", "vtx_features"});
@@ -125,23 +118,20 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       if (taginfo.features().is_filled) {
         get_input_sizes(taginfo);
 
-        // Restore proper feature geometry per candidate group:
         input_shapes_ = {
-            {(int64_t)1, (int64_t)global_size},              // global features: shape [1,4]
-            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},         // cpf features: shape [1,50,22]
-            {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},         // npf features: shape [1,0,0]
-            {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}           // vtx features: shape [1,5,14]
+            {(int64_t)1, (int64_t)global_size},              
+            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},
+            {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_}, 
+            {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}
         };
         
-        // Run inference - directly assign outputs using the same pattern as UnifiedParticleTransformer
         outputs = globalCache()->run(input_names_, data_, input_shapes_, output_names_, 1)[0];
         
         assert(outputs.size() == flav_names_.size());
-        // Debug output with clearer labels
-        std::cout << "Jet " << jet_n << " probabilities:" << std::endl;
+        /*std::cout << "Jet " << jet_n << " probabilities:" << std::endl;
         for (size_t i = 0; i < outputs.size(); ++i) {
           std::cout << "  " << flav_names_[i] << ": " << outputs[i] << std::endl;
-        }
+        }*/
       }
 
       const auto& jet_ref = taginfo.jet();
@@ -150,7 +140,6 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       }
     }
 
-    // put into the event
     for (std::size_t flav_n = 0; flav_n < flav_names_.size(); ++flav_n) {
       iEvent.put(std::move(output_tags[flav_n]), flav_names_[flav_n]);
     }
@@ -159,9 +148,9 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
   void hltParticleTransformerAK4ONNXJetTagsProducer::get_input_sizes(
       const reco::hltParticleTransformerAK4TagInfo& taginfo) {
     const auto& features = taginfo.features();
-    n_features_cpf_ = 22; // updated: 22 features per charged candidate (removed frompv, track_chi2, track_qual, dzsig)
-    n_features_npf_ = 0;  // updated: 0 features per neutral candidate
-    n_features_sv_  = 14; // updated: 14 features per vertex candidate
+    n_features_cpf_ = 22; 
+    n_features_npf_ = 0; 
+    n_features_sv_  = 14;
 
     std::vector<unsigned int> input_sizes = {
         static_cast<unsigned int>(global_size),
@@ -180,7 +169,6 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
 
   void hltParticleTransformerAK4ONNXJetTagsProducer::make_inputs(const btagbtvdeep::hltParticleTransformerAK4Features& features) {
     float* ptr = nullptr;
-    // Global features: new order: jet_pt, jet_eta, jet_phi, jet_energy
     {
       assert(data_[kGlobalFeatures].size() >= global_size);
       float* start = &data_[kGlobalFeatures][0];
@@ -192,7 +180,6 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       assert(ptr == start + global_size);
     }
     
-    // Charged PF candidates (new order, 22 features per candidate):
     {
       assert(data_[kCpfCandidates].size() >= n_max_cpf_candidates_ * n_features_cpf_);
       unsigned offset = 0;
@@ -231,14 +218,10 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       }
     }
     
-    // Neutral PF candidates: none expected.
     {
       assert(data_[kNpfCandidates].size() == 0 || data_[kNpfCandidates].empty());
     }
     
-    // SV candidates (new order: jet_sv_deta, jet_sv_dphi, jet_sv_pt_log, jet_sv_mass,
-    // jet_sv_ntrack, jet_sv_chi2, jet_sv_dxy, jet_sv_dxysig, jet_sv_d3d, jet_sv_d3dsig,
-    // jet_sv_pt, jet_sv_eta, jet_sv_phi, jet_sv_energy):
     {
       assert(data_[kVtxFeatures].size() >= n_max_sv_candidates_ * n_features_sv_);
       unsigned offset = 0;
@@ -268,7 +251,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         assert(writtenSv == static_cast<int>(n_features_sv_));
       }
     }
-        // --- Printout of the filled tensors ---
+    /*    // --- Printout of the filled tensors ---
     std::cout << "=== Dumping Tensors for ONNX Runtime ===" << std::endl;
     // Print Global Features
     std::cout << "  -- Global Features (data_[" << kGlobalFeatures << "], size: " << data_[kGlobalFeatures].size() << ") --" << std::endl;
@@ -280,8 +263,6 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
     std::cout << "  -- Charged PF Candidates (data_[" << kCpfCandidates << "], size: " << data_[kCpfCandidates].size() << ") --" << std::endl;
     std::cout << "    (Formatted as [cand_idx * n_features + feature_idx])" << std::endl;
     for (size_t i = 0; i < data_[kCpfCandidates].size(); ++i) {
-      // Print only a few elements for brevity if the tensor is too large, or print all
-      // For now, printing all. Can be adjusted if output is too verbose.
       std::cout << "    data_[" << kCpfCandidates << "][" << i << "]: " << data_[kCpfCandidates][i] << std::endl;
     }
 
@@ -298,7 +279,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       std::cout << "    data_[" << kVtxFeatures << "][" << i << "]: " << data_[kVtxFeatures][i] << std::endl;
     }
     std::cout << "=== End Tensor Dump ===" << std::endl;
-    // --- End Printout ---
+    // --- End Printout ---*/
   }
 
 //define this as a plug-in
