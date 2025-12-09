@@ -15,6 +15,7 @@
 #include "RecoVertex/VertexTools/interface/VertexDistanceXY.h"
 #include "RecoVertex/VertexPrimitives/interface/ConvertToFromReco.h"
 #include "RecoVertex/VertexPrimitives/interface/VertexState.h"
+#include <iostream>
 namespace btagbtvdeep {
 
   constexpr static int qualityMap[8] = {1, 0, 1, 1, 4, 4, 5, 6};
@@ -283,7 +284,7 @@ namespace btagbtvdeep {
         } else {
           prep_params.min_length = group_pset.at("min_length");
           prep_params.max_length = group_pset.at("max_length");
-          input_shapes_.push_back({1, (int64_t)prep_params.var_names.size(), -1});
+          input_shapes_.push_back({1, (int64_t)prep_params.max_length, (int64_t)prep_params.var_names.size()});
         }
         const auto &var_info_pset = group_pset.at("var_infos");
         for (const auto &var_name : prep_params.var_names) {
@@ -333,6 +334,15 @@ namespace btagbtvdeep {
         }
       }
     }
+    std::cout << "ParticleNetConstructor: --- Constructed Shapes ---" << std::endl;
+    for (size_t i = 0; i < input_names_.size(); ++i) {
+      std::cout << "  Input: " << input_names_[i] << ", Shape: (";
+      for (size_t j = 0; j < input_shapes_[i].size(); ++j) {
+        std::cout << input_shapes_[i][j] << (j == input_shapes_[i].size() - 1 ? "" : ", ");
+      }
+      std::cout << ")" << std::endl;
+    }
+    std::cout << "---------------------------------------------" << std::endl;
   }
 
 }  // namespace btagbtvdeep

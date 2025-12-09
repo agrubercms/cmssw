@@ -160,6 +160,7 @@ void BoostedJetONNXJetTagsProducer::produce(edm::Event &iEvent, const edm::Event
   // initialize output collection
   std::vector<std::unique_ptr<JetTagCollection>> output_tags;
   std::vector<std::vector<float>> output_scores(flav_names_.size(), std::vector<float>(tag_infos->size(), -1.0));
+
   if (!tag_infos->empty()) {
     auto jet_ref = tag_infos->begin()->jet();
     auto ref2prod = edm::makeRefToBaseProdFrom(jet_ref, iEvent);
@@ -172,102 +173,166 @@ void BoostedJetONNXJetTagsProducer::produce(edm::Event &iEvent, const edm::Event
     }
   }
 
+  // OPTIONAL: if you plan to publish regression as a ValueMap
+  // std::vector<float> output_scores_reg(tag_infos->size(), -1.f);
+
   for (unsigned jet_n = 0; jet_n < tag_infos->size(); ++jet_n) {
     const auto &taginfo = (*tag_infos)[jet_n];
-    std::vector<float> outputs(flav_names_.size(), 0);  // init as all zeros
+
+    // default to zeros
+    std::vector<float> outputs(flav_names_.size(), 0.0f);
 
     if (!taginfo.features().empty()) {
-      // convert inputs
+      // 1) build inputs
       make_inputs(taginfo);
-      // run prediction and get outputs
-      outputs = globalCache()->run(input_names_, data_, input_shapes_)[0];
-      assert(outputs.size() == flav_names_.size());
+
+      // 2) run ONNX (may have 1 or 2 outputs)
+      const auto onnx_outputs = globalCache()->run(input_names_, data_, input_shapes_);
+
+      if (onnx_outputs.size() == 1u) {
+        const auto &probs = onnx_outputs[0];
+        assert(probs.size() == flav_names_.size());
+        outputs = probs;
+
+      } else if (onnx_outputs.size() == 2u) {
+        const auto &probs = onnx_outputs[0];
+        assert(probs.size() == flav_names_.size());
+        outputs = probs;
+
+        // const auto &reg = onnx_outputs[1];            // [1] (or flattened [batch,1])
+        // if (!reg.empty()) output_scores_reg[jet_n] = reg[0];
+        // (If you don’t publish regression, just omit the line above and the variable to avoid -Wunused-variable.)
+      } else {
+        throw cms::Exception("ONNX") << "Unexpected number of outputs: " << onnx_outputs.size();
+      }
     }
 
+    // 3) fill outputs
     const auto &jet_ref = tag_infos->at(jet_n).jet();
-    for (std::size_t flav_n = 0; flav_n < flav_names_.size(); flav_n++) {
+    for (std::size_t flav_n = 0; flav_n < flav_names_.size(); ++flav_n) {
       (*(output_tags[flav_n]))[jet_ref] = outputs[flav_n];
       output_scores[flav_n][jet_n] = outputs[flav_n];
     }
   }
 
   if (debug_) {
-    LogDebug("produce") << "<BoostedJetONNXJetTagsProducer::produce>:" << std::endl
+    LogDebug("produce") << "<BoostedJetONNXJetTagsProducer::produce>:\n"
                         << "=== " << iEvent.id().run() << ":" << iEvent.id().luminosityBlock() << ":"
-                        << iEvent.id().event() << " ===" << std::endl;
+                        << iEvent.id().event() << " ===";
     for (unsigned jet_n = 0; jet_n < tag_infos->size(); ++jet_n) {
       const auto &jet_ref = tag_infos->at(jet_n).jet();
-      LogDebug("produce") << " - Jet #" << jet_n << ", pt=" << jet_ref->pt() << ", eta=" << jet_ref->eta()
-                          << ", phi=" << jet_ref->phi() << std::endl;
+      LogDebug("produce") << " - Jet #" << jet_n << ", pt=" << jet_ref->pt()
+                          << ", eta=" << jet_ref->eta() << ", phi=" << jet_ref->phi();
       for (std::size_t flav_n = 0; flav_n < flav_names_.size(); ++flav_n) {
         if (!produceValueMap_) {
-          LogDebug("produce") << "    " << flav_names_.at(flav_n) << " = " << (*(output_tags.at(flav_n)))[jet_ref]
-                              << std::endl;
+          LogDebug("produce") << "    " << flav_names_.at(flav_n) << " = "
+                              << (*(output_tags.at(flav_n)))[jet_ref];
         } else {
-          LogDebug("produce") << "    " << flav_names_.at(flav_n) << " = " << output_scores[flav_n][jet_n] << std::endl;
+          LogDebug("produce") << "    " << flav_names_.at(flav_n) << " = "
+                              << output_scores[flav_n][jet_n];
         }
       }
     }
   }
 
-  // put into the event
+  // put into the event (classification)
   if (!produceValueMap_) {
     for (std::size_t flav_n = 0; flav_n < flav_names_.size(); ++flav_n) {
       iEvent.put(std::move(output_tags[flav_n]), flav_names_[flav_n]);
     }
   } else {
     for (size_t k = 0; k < output_scores.size(); k++) {
-      std::unique_ptr<edm::ValueMap<float>> VM(new edm::ValueMap<float>());
+      auto VM = std::make_unique<edm::ValueMap<float>>();
       edm::ValueMap<float>::Filler filler(*VM);
       filler.insert(jets, output_scores.at(k).begin(), output_scores.at(k).end());
       filler.fill();
       iEvent.put(std::move(VM), flav_names_[k]);
     }
+    // If you also publish regression:
+    // auto VR = std::make_unique<edm::ValueMap<float>>();
+    // edm::ValueMap<float>::Filler fr(*VR);
+    // fr.insert(jets, output_scores_reg.begin(), output_scores_reg.end());
+    // fr.fill();
+    // iEvent.put(std::move(VR), "pt_ratio");
   }
 }
+
 void BoostedJetONNXJetTagsProducer::make_inputs(const reco::DeepBoostedJetTagInfo &taginfo) {
   for (unsigned igroup = 0; igroup < input_names_.size(); ++igroup) {
-    const auto &group_name = input_names_[igroup];
+    const auto &group_name  = input_names_[igroup];
     const auto &prep_params = prep_info_map_.at(group_name);
-    auto &group_values = data_[igroup];
-    group_values.resize(input_sizes_[igroup]);
-    // first reset group_values to 0
-    std::fill(group_values.begin(), group_values.end(), 0);
-    unsigned curr_pos = 0;
-    // transform/pad
-    for (unsigned i = 0; i < prep_params.var_names.size(); ++i) {
-      const auto &varname = prep_params.var_names[i];
-      const auto &raw_value = taginfo.features().get(varname);
-      const auto &info = prep_params.info(varname);
-      int insize = center_norm_pad(raw_value,
-                                   info.center,
-                                   info.norm_factor,
-                                   prep_params.min_length,
-                                   prep_params.max_length,
-                                   group_values,
-                                   curr_pos,
-                                   info.pad,
-                                   info.replace_inf_value,
-                                   info.lower_bound,
-                                   info.upper_bound);
-      curr_pos += insize;
-      if (i == 0 && (!input_shapes_.empty())) {
-        input_shapes_[igroup][2] = insize;
-      }
+    auto &group_values      = data_[igroup];
 
-      if (debug_) {
-        LogDebug("make_inputs") << "<BoostedJetONNXJetTagsProducer::make_inputs>:" << std::endl
-                                << " -- var=" << varname << ", center=" << info.center << ", scale=" << info.norm_factor
-                                << ", replace=" << info.replace_inf_value << ", pad=" << info.pad << std::endl;
-        for (unsigned i = curr_pos - insize; i < curr_pos; i++) {
-          LogDebug("make_inputs") << group_values[i] << ",";
-        }
-        LogDebug("make_inputs") << std::endl;
+    const unsigned len   = prep_params.max_length;                // #candidates (padded)
+    const unsigned nfeat = prep_params.var_names.size();          // #features
+
+    // Resize to (len * nfeat) and zero-fill
+    group_values.assign(len * nfeat, 0.f);
+
+    // Fix dynamic dims to [1, len, nfeat] if needed
+    if (!input_shapes_.empty()) {
+      auto &shape = input_shapes_[igroup];
+      if (shape.size() >= 3) {
+        if (shape[1] < 0) shape[1] = static_cast<int64_t>(len);
+        if (shape[2] < 0) shape[2] = static_cast<int64_t>(nfeat);
       }
     }
-    group_values.resize(curr_pos);
+
+    // For each feature, normalize+pad into a temp vector of length 'len',
+    // then scatter into candidate-major layout: out[p*nfeat + feat]
+    std::vector<float> tmp(len, 0.f);
+
+    for (unsigned feat = 0; feat < nfeat; ++feat) {
+      const auto &varname   = prep_params.var_names[feat];
+      const auto &raw_value = taginfo.features().get(varname);
+      const auto &info      = prep_params.info(varname);
+
+      // fill tmp[0..len-1]
+      std::fill(tmp.begin(), tmp.end(), 0.f);
+      center_norm_pad(
+          raw_value,
+          info.center,
+          info.norm_factor,
+          prep_params.min_length,
+          len,
+          /*dst=*/tmp,
+          /*pos=*/0,
+          info.pad,                // pad value from JSON
+          info.replace_inf_value,
+          info.lower_bound,
+          info.upper_bound
+      );
+
+      // scatter with stride nfeat (candidate-major)
+      for (unsigned p = 0; p < len; ++p) {
+        group_values[p * nfeat + feat] = tmp[p];
+      }
+    }
+
+    // Optional sanity check
+    /*for (unsigned p = 0; p < std::min(2u,len); ++p) {
+      edm::LogPrint("CHK") << "cand " << p << " first 5 feats: "
+                           << group_values[p*nfeat+0] << ", "
+                           << group_values[p*nfeat+1] << ", "
+                           << group_values[p*nfeat+2] << ", "
+                           << group_values[p*nfeat+3] << ", "
+                           << group_values[p*nfeat+4];
+    }*/
   }
+
+  // (keep your debug dump if you like)
+  /*std::cout << "=== Dumping Tensors for ONNX Runtime in Boosted Jet Producer ===\n";
+  for (unsigned igroup = 0; igroup < input_names_.size(); ++igroup) {
+    std::cout << "  -- " << input_names_[igroup]
+              << " (data_[" << igroup << "], size: " << data_[igroup].size() << ") --\n";
+    for (size_t j = 0; j < data_[igroup].size(); ++j) {
+      std::cout << "    data_[" << igroup << "][" << j << "]: " << data_[igroup][j] << "\n";
+    }
+  }
+  std::cout << "=== End Tensor Dump ===\n";*/
 }
+
+
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(BoostedJetONNXJetTagsProducer);

@@ -87,7 +87,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
     edm::ParameterSetDescription desc;
     desc.add<edm::InputTag>("src", edm::InputTag("hltParticleTransformerAK4TagInfos"));
     desc.add<std::vector<std::string>>("input_names", {"global_features", "cpf_features", "npf_features", "vtx_features"});
-    desc.add<edm::FileInPath>("model_path", edm::FileInPath("ParticleTransformer.onnx"));
+    desc.add<edm::FileInPath>("model_path", edm::FileInPath("ParticleTransformer_endcapOnly.onnx"));
     desc.add<std::vector<std::string>>("output_names", {"output"});
     desc.add<std::vector<std::string>>("flav_names", {"probb", "probbb", "problepb"});
 
@@ -138,10 +138,10 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         
         assert(outputs.size() == flav_names_.size());
         // Debug output with clearer labels
-        std::cout << "Jet " << jet_n << " probabilities:" << std::endl;
+        /*std::cout << "Jet " << jet_n << " probabilities:" << std::endl;
         for (size_t i = 0; i < outputs.size(); ++i) {
           std::cout << "  " << flav_names_[i] << ": " << outputs[i] << std::endl;
-        }
+        }*/
       }
 
       const auto& jet_ref = taginfo.jet();
@@ -268,7 +268,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         assert(writtenSv == static_cast<int>(n_features_sv_));
       }
     }
-        // --- Printout of the filled tensors ---
+    /*    // --- Printout of the filled tensors ---
     std::cout << "=== Dumping Tensors for ONNX Runtime ===" << std::endl;
     // Print Global Features
     std::cout << "  -- Global Features (data_[" << kGlobalFeatures << "], size: " << data_[kGlobalFeatures].size() << ") --" << std::endl;
@@ -298,7 +298,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       std::cout << "    data_[" << kVtxFeatures << "][" << i << "]: " << data_[kVtxFeatures][i] << std::endl;
     }
     std::cout << "=== End Tensor Dump ===" << std::endl;
-    // --- End Printout ---
+    // --- End Printout ---*/
   }
 
 //define this as a plug-in

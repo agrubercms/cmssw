@@ -105,6 +105,7 @@ fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_DoubleMediumChargedIs
 fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_DoubleMediumDeepTauPFTauHPS35_eta2p1_cfi")
 
 fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_DoublePNetTauh_cfi")
+fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_DoubleParTTauh_cfi")
 
 fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_Diphoton30_23_IsoCaloId_L1Seeded_cfi")
 fragment.load("HLTrigger/Configuration/HLT_75e33/paths/HLT_Diphoton30_23_IsoCaloId_Unseeded_cfi")
@@ -415,7 +416,7 @@ fragment.schedule = cms.Schedule(*[
     fragment.HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1,
 
     fragment.HLT_DoublePNetTauh,
-
+    fragment.HLT_DoubleParTTauh,
     ### Removed temporarily until final decision on L1T tau Phase-2
     #fragment.L1T_DoubleNNTau52,
     #fragment.L1T_SingleNNTau150,

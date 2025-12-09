@@ -11,8 +11,8 @@ hltParticleNetDiscriminatorsJetTags = cms.EDProducer( "BTagProbabilityToDiscrimi
         denominator = cms.VInputTag( 'hltParticleNetONNXJetTags:probb','hltParticleNetONNXJetTags:probc','hltParticleNetONNXJetTags:probuds','hltParticleNetONNXJetTags:probg' )
       ),
       cms.PSet(  name = cms.string( "TauhvsAll" ),
-        numerator = cms.VInputTag( 'hltParticleNetONNXJetTags:probtauhp','hltParticleNetONNXJetTags:probtauhm' ),
-        denominator = cms.VInputTag( 'hltParticleNetONNXJetTags:probb','hltParticleNetONNXJetTags:probc','hltParticleNetONNXJetTags:probuds','hltParticleNetONNXJetTags:probg','hltParticleNetONNXJetTags:probtauhp','hltParticleNetONNXJetTags:probtauhm' )
+        numerator = cms.VInputTag( 'hltParticleNetONNXJetTags:probtaup','hltParticleNetONNXJetTags:probtaum' ),
+        denominator = cms.VInputTag( 'hltParticleNetONNXJetTags:probb','hltParticleNetONNXJetTags:probc','hltParticleNetONNXJetTags:probuds','hltParticleNetONNXJetTags:probg','hltParticleNetONNXJetTags:probtaup','hltParticleNetONNXJetTags:probtaum' )
       ),
       cms.PSet(  name = cms.string( "CvsL" ),
         numerator = cms.VInputTag( 'hltParticleNetONNXJetTags:probc' ),

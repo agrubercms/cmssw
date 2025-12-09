@@ -37,7 +37,7 @@
 #include <vector>
 #include <cmath>
 
-#define DEBUG
+//#define DEBUG
 
 // The HLT producer produces a vector of hltParticleTransformerAK4TagInfo.
 class hltParticleTransformerAK4TagInfoProducer : public edm::stream::EDProducer<> {

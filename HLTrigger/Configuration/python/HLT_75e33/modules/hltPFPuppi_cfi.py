@@ -1,13 +1,15 @@
 import FWCore.ParameterSet.Config as cms
 
 hltPFPuppi = cms.EDProducer("PuppiProducer",
-    DeltaZCut = cms.double(0.1),
+    DeltaZCut = cms.double(0.2),
+    UseFromPV2Recovery = cms.bool(True),
+    PtMinForFromPV2Recovery = cms.double(4.0),
     DeltaZCutForChargedFromPUVtxs = cms.double(0.2),
     EtaMaxCharged = cms.double(99999.0),
     EtaMaxPhotons = cms.double(2.5),
     EtaMinUseDeltaZ = cms.double(-1.0),
     MinPuppiWeight = cms.double(0.01),
-    NumOfPUVtxsForCharged = cms.uint32(0),
+    NumOfPUVtxsForCharged = cms.uint32(10),
     PUProxyValue = cms.InputTag("hltPixelClustersMultiplicity"),
     PtMaxCharged = cms.double(-1.0),
     PtMaxNeutrals = cms.double(200.0),
