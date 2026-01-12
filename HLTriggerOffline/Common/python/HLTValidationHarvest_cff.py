@@ -18,6 +18,7 @@ from HLTriggerOffline.Egamma.HLTpostProcessorGsfTracker_cfi import *
 from Validation.HGCalValidation.HLTHGCalPostProcessor_cff import *
 from Validation.HLTrigger.HLTGenValidationHarvesting_cff import *
 from Validation.HGCalValidation.BarrelPostProcessor_cff import *
+from Validation.RecoTau.ticlTauPostValidation_cfi import *
 
 hltpostvalidation = cms.Sequence( 
     postProcessorHLTtrackingSequence
@@ -58,6 +59,7 @@ _phase2_hltpostvalidation =  hltpostvalidation.copyAndExclude([HLTTauPostVal,
                                                                HltBTagPostVal])
 # Add HGCal validation
 _phase2_hltpostvalidation += hltHcalValidatorPostProcessor
+_phase2_hltpostvalidation += ticlTauHarvesting
 
 # Add HLT gen validation
 _phase2_hltpostvalidation += hltGenValidationClient
