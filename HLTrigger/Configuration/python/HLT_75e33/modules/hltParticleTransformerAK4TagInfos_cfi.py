@@ -16,5 +16,5 @@ hltParticleTransformerAK4TagInfos = cms.EDProducer("hltParticleTransformerAK4Tag
     #puppi_value_map = cms.InputTag(""),
     secondary_vertices = cms.InputTag("hltDeepInclusiveMergedVerticesPF"),
     vertex_associator = cms.InputTag("hltPrimaryVertexAssociation","original"),
-    vertices = cms.InputTag("hltPhase2PixelVertices")
+    vertices = cms.InputTag("hltGoodOfflinePrimaryVertices")
 )

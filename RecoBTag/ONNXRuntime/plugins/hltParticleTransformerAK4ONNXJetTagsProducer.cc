@@ -53,7 +53,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
 
     // For charged PF candidates:
     constexpr static unsigned n_max_cpf_candidates_ = 50; // updated maximum candidates per jet
-    unsigned n_features_cpf_; // now 22 features per candidate
+    unsigned n_features_cpf_; // 31 features per candidate (matches YAML cpf_candidates list)
 
     // For neutral PF candidates:
     constexpr static unsigned n_max_npf_candidates_ = 0; // no neutral candidates
@@ -61,7 +61,7 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
 
     // For SV candidates:
     constexpr static unsigned n_max_sv_candidates_ = 5;  // remains
-    unsigned n_features_sv_; // updated to 14
+    unsigned n_features_sv_; // 16 features per vertex candidate (matches YAML vtx_features list)
 
     std::vector<unsigned> input_sizes_;
     std::vector<std::vector<int64_t>> input_shapes_;  // shapes of each input group (-1 for dynamic axis)
@@ -127,10 +127,10 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
 
         // Restore proper feature geometry per candidate group:
         input_shapes_ = {
-            {(int64_t)1, (int64_t)global_size},              // global features: shape [1,4]
-            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},         // cpf features: shape [1,50,22]
-            {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},         // npf features: shape [1,0,0]
-            {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}           // vtx features: shape [1,5,14]
+            {(int64_t)1, (int64_t)global_size},                                       // [1, 4]
+            {(int64_t)1, (int64_t)n_max_cpf_candidates_, (int64_t)n_features_cpf_},   // [1, 50, 31]
+            {(int64_t)1, (int64_t)n_max_npf_candidates_, (int64_t)n_features_npf_},   // [1, 0, 0]
+            {(int64_t)1, (int64_t)n_max_sv_candidates_,  (int64_t)n_features_sv_}     // [1, 5, 16]
         };
         
         // Run inference - directly assign outputs using the same pattern as UnifiedParticleTransformer
@@ -159,9 +159,12 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
   void hltParticleTransformerAK4ONNXJetTagsProducer::get_input_sizes(
       const reco::hltParticleTransformerAK4TagInfo& taginfo) {
     const auto& features = taginfo.features();
-    n_features_cpf_ = 22; // updated: 22 features per charged candidate (removed frompv, track_chi2, track_qual, dzsig)
-    n_features_npf_ = 0;  // updated: 0 features per neutral candidate
-    n_features_sv_  = 14; // updated: 14 features per vertex candidate
+    // Feature counts must match:
+    //  - cpf_candidates: 31 entries in hlt_part_debug.yml
+    //  - vtx_features:   16 entries in hlt_part_debug.yml
+    n_features_cpf_ = 31; // 31 features per charged candidate
+    n_features_npf_ = 0;  // 0 features per neutral candidate (no NPF branch)
+    n_features_sv_  = 16; // 16 features per vertex candidate
 
     std::vector<unsigned int> input_sizes = {
         static_cast<unsigned int>(global_size),
@@ -192,21 +195,28 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       assert(ptr == start + global_size);
     }
     
-    // Charged PF candidates (new order, 22 features per candidate):
+    // Charged PF candidates (YAML order, 31 features per candidate):
     {
       assert(data_[kCpfCandidates].size() >= n_max_cpf_candidates_ * n_features_cpf_);
       unsigned offset = 0;
-      for (std::size_t c_pf_n = 0; c_pf_n < std::min(features.cpf_candidates.size(), (std::size_t)n_max_cpf_candidates_); c_pf_n++) {
+      for (std::size_t c_pf_n = 0;
+           c_pf_n < std::min(features.cpf_candidates.size(), (std::size_t)n_max_cpf_candidates_);
+           c_pf_n++) {
         ptr = &data_[kCpfCandidates][offset + c_pf_n * n_features_cpf_];
         const auto& cpf = features.cpf_candidates[c_pf_n];
         float* start_cpf = ptr;
+
         *ptr++ = cpf.jet_pfcand_deta;
         *ptr++ = cpf.jet_pfcand_dphi;
         *ptr++ = cpf.jet_pfcand_pt_log;
         *ptr++ = cpf.jet_pfcand_energy_log;
         *ptr++ = cpf.jet_pfcand_charge;
+        *ptr++ = cpf.jet_pfcand_frompv;
         *ptr++ = cpf.jet_pfcand_nlostinnerhits;
+        *ptr++ = cpf.jet_pfcand_track_chi2;
+        *ptr++ = cpf.jet_pfcand_track_qual;
         *ptr++ = cpf.jet_pfcand_dz;
+        *ptr++ = cpf.jet_pfcand_dzsig;
         *ptr++ = cpf.jet_pfcand_dxy;
         *ptr++ = cpf.jet_pfcand_dxysig;
         *ptr++ = cpf.jet_pfcand_etarel;
@@ -218,13 +228,19 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         *ptr++ = cpf.jet_pfcand_trackjet_decayL;
         *ptr++ = cpf.jet_pfcand_npixhits;
         *ptr++ = cpf.jet_pfcand_nstriphits;
+        *ptr++ = cpf.jet_pfcand_calofraction;
+        *ptr++ = cpf.jet_pfcand_hcalfraction;
+        *ptr++ = cpf.jet_pfcand_puppiw;
+        *ptr++ = cpf.jet_pfcand_highpurity;
+        *ptr++ = cpf.jet_pfcand_id;
         *ptr++ = cpf.jet_pfcand_pt;
         *ptr++ = cpf.jet_pfcand_eta;
         *ptr++ = cpf.jet_pfcand_phi;
         *ptr++ = cpf.jet_pfcand_energy;
+
         int written = ptr - start_cpf;
         if (written != static_cast<int>(n_features_cpf_)) {
-          std::cout << "Charged candidate " << c_pf_n << ": wrote " << written 
+          std::cout << "Charged candidate " << c_pf_n << ": wrote " << written
                     << " features, expected " << n_features_cpf_ << std::endl;
         }
         assert(written == static_cast<int>(n_features_cpf_));
@@ -236,16 +252,17 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
       assert(data_[kNpfCandidates].size() == 0 || data_[kNpfCandidates].empty());
     }
     
-    // SV candidates (new order: jet_sv_deta, jet_sv_dphi, jet_sv_pt_log, jet_sv_mass,
-    // jet_sv_ntrack, jet_sv_chi2, jet_sv_dxy, jet_sv_dxysig, jet_sv_d3d, jet_sv_d3dsig,
-    // jet_sv_pt, jet_sv_eta, jet_sv_phi, jet_sv_energy):
+    // SV candidates (YAML order, 16 features per candidate)
     {
       assert(data_[kVtxFeatures].size() >= n_max_sv_candidates_ * n_features_sv_);
       unsigned offset = 0;
-      for (std::size_t sv_n = 0; sv_n < std::min(features.vtx_features.size(), (std::size_t)n_max_sv_candidates_); sv_n++) {
+      for (std::size_t sv_n = 0;
+           sv_n < std::min(features.vtx_features.size(), (std::size_t)n_max_sv_candidates_);
+           sv_n++) {
         ptr = &data_[kVtxFeatures][offset + sv_n * n_features_sv_];
         const auto& sv = features.vtx_features[sv_n];
         float* start_sv = ptr;
+
         *ptr++ = sv.jet_sv_deta;
         *ptr++ = sv.jet_sv_dphi;
         *ptr++ = sv.jet_sv_pt_log;
@@ -256,10 +273,13 @@ class hltParticleTransformerAK4ONNXJetTagsProducer : public edm::stream::EDProdu
         *ptr++ = sv.jet_sv_dxysig;
         *ptr++ = sv.jet_sv_d3d;
         *ptr++ = sv.jet_sv_d3dsig;
+        *ptr++ = sv.jet_sv_costhetasvpv;
+        *ptr++ = sv.jet_sv_enratio;
         *ptr++ = sv.jet_sv_pt;
         *ptr++ = sv.jet_sv_eta;
         *ptr++ = sv.jet_sv_phi;
         *ptr++ = sv.jet_sv_energy;
+
         int writtenSv = ptr - start_sv;
         if (writtenSv != static_cast<int>(n_features_sv_)) {
           std::cout << "SV candidate " << sv_n << ": wrote " << writtenSv

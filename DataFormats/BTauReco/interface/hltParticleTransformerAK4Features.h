@@ -36,6 +36,14 @@ public:
   float jet_pfcand_trackjet_decayL;
   float jet_pfcand_npixhits;
   float jet_pfcand_nstriphits;
+
+  // new features added for training/inference
+  float jet_pfcand_calofraction;
+  float jet_pfcand_hcalfraction;
+  float jet_pfcand_puppiw;
+  float jet_pfcand_highpurity;
+  float jet_pfcand_id;
+
   float jet_pfcand_pt;
   float jet_pfcand_eta;
   float jet_pfcand_phi;
@@ -68,6 +76,11 @@ public:
   float jet_sv_dxysig;
   float jet_sv_d3d;
   float jet_sv_d3dsig;
+
+  // new SV features from YAML
+  float jet_sv_costhetasvpv;
+  float jet_sv_enratio;
+
   float jet_sv_pt;
   float jet_sv_eta;
   float jet_sv_phi;
