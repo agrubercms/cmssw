@@ -73,7 +73,8 @@ void SimTauProducer::buildSimTau(SimTauCPLink& t,
     LogDebug("SimTauProducer")
         .format(" TO BE SAVED {}, key {}, barcode {}", resonance_idx, gen_particle_key, gen_particle_barcode);
     auto const& found_in_caloparticles = std::find_if(caloPartVec.begin(), caloPartVec.end(), [&](const auto& p) {
-      return p.g4Tracks()[0].genpartIndex() == gen_particle_barcode;
+      return p.g4Tracks()[0].genpartIndex() == gen_particle_barcode && p.g4Tracks()[0].eventId().bunchCrossing() == 0 &&
+             p.g4Tracks()[0].eventId().event() == 0;
     });
     if (found_in_caloparticles != caloPartVec.end()) {
       auto calo_particle_idx = (found_in_caloparticles - caloPartVec.begin());
